@@ -1,0 +1,143 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>org.hobbit</groupId>
+	<artifactId>questionanswering</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	
+	<repositories>
+	  	<repository>
+	  		<id>maven.aksw.internal</id>
+	  		<name>University Leipzig, AKSW Maven2 Repository</name>
+			<url>http://maven.aksw.org/repository/internal</url>
+		</repository>
+		<repository>
+			<id>maven.aksw.snapshots</id>
+			<name>University Leipzig, AKSW Maven2 Repository</name>
+			<url>http://maven.aksw.org/repository/snapshots</url>
+		</repository>
+	</repositories>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.hobbit</groupId>
+			<artifactId>core</artifactId>
+			<version>1.0.2</version>
+		</dependency>
+		
+		<!-- GERBIL QA -->
+		<dependency>
+			<groupId>org.aksw</groupId>
+			<artifactId>gerbil-qa</artifactId>
+			<version>0.1.1</version>
+		</dependency>
+		
+		<!-- GERBIL -->
+		<dependency>
+			<groupId>org.aksw</groupId>
+			<artifactId>gerbil</artifactId>
+			<version>1.2.4-jena3.1</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>jena-core</artifactId>
+					<groupId>org.apache.jena</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>jena-arq</artifactId>
+					<groupId>org.apache.jena</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>client</artifactId>
+					<groupId>fr.eurecom.nerd</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>bfycomm099</artifactId>
+					<groupId>org.babelnet</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>bfyonline099</artifactId>
+					<groupId>org.babelnet</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>commlogg113</artifactId>
+					<groupId>org.apache</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>commconf15</artifactId>
+					<groupId>org.apache</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>jltutils203</artifactId>
+					<groupId>org.babelnet</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>commlang23</artifactId>
+					<groupId>org.apache</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>commcoll32</artifactId>
+					<groupId>org.apache</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>stanpost341</artifactId>
+					<groupId>edu.stanford</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>jsonld-java-jena</artifactId>
+					<groupId>com.github.jsonld-java</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		
+	</dependencies>
+	
+	<build>
+		<plugins>
+			<plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>2.4.3</version>
+				<configuration>
+					<!-- filter all the META-INF files of other artifacts -->
+					<filters>
+						<filter>
+							<artifact>*:*</artifact>
+							<excludes>
+								<exclude>META-INF/*.SF</exclude>
+								<exclude>META-INF/*.DSA</exclude>
+								<exclude>META-INF/*.RSA</exclude>
+							</excludes>
+						</filter>
+					</filters>
+					<transformers>
+						<transformer
+							implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+							<manifestEntries>
+								<X-Compile-Source-JDK>${maven.compile.source}</X-Compile-Source-JDK>
+								<X-Compile-Target-JDK>${maven.compile.target}</X-Compile-Target-JDK>
+							</manifestEntries>
+						</transformer>
+						<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+					</transformers>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+  
+</project>
