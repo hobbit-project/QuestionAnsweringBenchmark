@@ -177,7 +177,7 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
 		qaldFormatStringToEvaluation = qaHelper.addHead(qaldFormatStringToEvaluation, datasetId);
 		
 		if(experimentTaskName.toLowerCase().equals("hybrid")){
-        	qaldFormatStringToSystem = qaHelper.addQuestion(qaldFormatStringToSystem, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
+        	qaldFormatStringToSystem = qaHelper.addQuestionSystem(qaldFormatStringToSystem, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
         	qaldFormatStringToSystem = qaHelper.addFoot(qaldFormatStringToSystem);
         	
         	qaldFormatStringToEvaluation = qaHelper.addQuestion(qaldFormatStringToEvaluation, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
@@ -190,7 +190,7 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
         	qaldFormatStringToEvaluation = qaHelper.addFoot(qaldFormatStringToEvaluation);
         }
         else if(experimentTaskName.toLowerCase().equals("largescale")){
-        	qaldFormatStringToSystem = qaHelper.addQuestion(qaldFormatStringToSystem, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
+        	qaldFormatStringToSystem = qaHelper.addQuestionSystem(qaldFormatStringToSystem, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
         	qaldFormatStringToSystem = qaHelper.addFoot(qaldFormatStringToSystem);
         	
         	qaldFormatStringToEvaluation = qaHelper.addQuestion(qaldFormatStringToEvaluation, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
@@ -203,7 +203,7 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
 			qaldFormatStringToEvaluation = qaHelper.addFoot(qaldFormatStringToEvaluation);
         }
         else if(experimentTaskName.toLowerCase().equals("multilingual")){
-        	qaldFormatStringToSystem = qaHelper.addQuestion(qaldFormatStringToSystem, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
+        	qaldFormatStringToSystem = qaHelper.addQuestionSystem(qaldFormatStringToSystem, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
         	qaldFormatStringToSystem = qaHelper.addFoot(qaldFormatStringToSystem);
         	
         	qaldFormatStringToEvaluation = qaHelper.addQuestion(qaldFormatStringToEvaluation, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);

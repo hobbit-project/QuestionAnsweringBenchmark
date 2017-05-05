@@ -35,6 +35,22 @@ public class QaHelper {
 		return extendedQald;
 	}
     
+	public String addQuestionSystem(String extendedQald, String questionId, String answertype, String aggregation,
+	  		   String onlydbo, String hybrid, String language, String question, String keywords){
+			extendedQald += 	"{\n"+
+	  			   			"\"id\": \""+questionId+"\",\n"+
+	  			   			//"\"answertype\": \""+answertype+"\",\n"+
+	  			   			//"\"aggregation\": \""+aggregation+"\",\n"+
+	  			   			//"\"onlydbo\": \""+onlydbo+"\",\n"+
+	  			   			//"\"hybrid\": \""+hybrid+"\",\n"+
+	  			   			"\"question\": [\n{\n"+
+	  			   			"\"language\": \""+language+"\",\n"+
+	  			   			"\"string\": \"" +question+"\",\n"+
+	  			   			"\"keywords\": \"" +keywords+"\"\n"+
+	  			   			"}\n"+"]\n"+"}\n";
+			return extendedQald;
+		}
+	
     public String addQuery(String extendedQald, String sparql){
     	extendedQald += "\"query\":{\n"+
   			   			"\"sparql\": \"" +sparql+"\"\n"+
