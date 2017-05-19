@@ -37,6 +37,7 @@ public class QaBenchmark extends AbstractBenchmarkController {
 	private String questionLanguage;
 	private String sparqlService;
 	private int numberOfDocuments;
+	private long timeForAnsweringQuestion;
 	private long seed;
 	
 	//create single data and task generator
@@ -54,7 +55,9 @@ public class QaBenchmark extends AbstractBenchmarkController {
     public void init() throws Exception {
     	LOGGER.info("Initializing.");
     	super.init();
-        
+    	
+    	LOGGER.info("Loading parameters from benchmark model.");
+    	
     	//load experimentType from benchmark model
         NodeIterator iterator = benchmarkParamModel.listObjectsOfProperty(benchmarkParamModel.getProperty(gerbilQaUri+"hasExperimentType"));
         if (iterator.hasNext()) {
@@ -158,10 +161,34 @@ public class QaBenchmark extends AbstractBenchmarkController {
         //check numberOfDocuments
         if (numberOfDocuments < 0) {
         	LOGGER.error("Couldn't get the number of documents from the parameter model. Using default value for type \""+experimentType+"\".");
-        	if(!experimentType.equals("largescale")){
-        		numberOfDocuments = 50;
-        	}else{ numberOfDocuments = 100; }
+        	if(!experimentTaskName.equals("largescale")){
+        		numberOfDocuments = 30;
+        	}else{ numberOfDocuments = 465; }
         	LOGGER.info("Setting number of documents to default value: \""+numberOfDocuments+"\"");
+        }else{
+        	if(experimentTaskName.equals("largescale")){
+        		numberOfDocuments = (numberOfDocuments*((numberOfDocuments+1)))/2;
+        		LOGGER.info("For largescale: chosen number of loads of questions equals to "+numberOfDocuments+" questions.");
+        		LOGGER.info("Updated number of questions to \""+numberOfDocuments+"\".");
+        	}
+        }
+        
+        //load timeForAnsweringQuestion from benchmark model
+        timeForAnsweringQuestion = -1;
+        iterator = benchmarkParamModel.listObjectsOfProperty(benchmarkParamModel.getProperty(gerbilQaUri+"hasAnsweringTime"));
+        if(iterator.hasNext()) {
+        	try {
+        		timeForAnsweringQuestion = iterator.next().asLiteral().getLong();
+                LOGGER.info("Got time for answering question from the parameter model: \""+timeForAnsweringQuestion+"\"");
+            } catch (Exception e) {
+                LOGGER.error("Exception while parsing parameter.", e);
+            }
+        }
+        //check timeForAnsweringQuestion
+        if (timeForAnsweringQuestion < 0) {
+        	LOGGER.error("Couldn't get the time for answering a question from the parameter model. Using default value.");
+        	timeForAnsweringQuestion = 60000;
+        	LOGGER.info("Setting time for answering a question to default value: \""+timeForAnsweringQuestion+"\"");
         }
         
         //load seed from benchmark model
@@ -218,9 +245,11 @@ public class QaBenchmark extends AbstractBenchmarkController {
         //create task generator
         LOGGER.info("Creating Task Generator.");
         envVariables = new String[] {
-        		QaDataGenerator.EXPERIMENT_TYPE_PARAMETER_KEY + "=" + experimentType.name(),
-        		QaDataGenerator.EXPERIMENT_TASK_PARAMETER_KEY + "=" + experimentTaskName,
+        		QaTaskGenerator.EXPERIMENT_TYPE_PARAMETER_KEY + "=" + experimentType.name(),
+        		QaTaskGenerator.EXPERIMENT_TASK_PARAMETER_KEY + "=" + experimentTaskName,
         		QaTaskGenerator.QUESTION_LANGUAGE_PARAMETER_KEY + "=" + questionLanguage,
+        		QaTaskGenerator.NUMBER_OF_DOCUMENTS_PARAMETER_KEY + "=" + numberOfDocuments,
+        		QaTaskGenerator.TIME_FOR_ANSWERING_PARAMETER_KEY + "=" + timeForAnsweringQuestion,
 				QaTaskGenerator.SEED_PARAMETER_KEY + "=" + seed};
         createTaskGenerators(TASK_GENERATOR_CONTAINER_IMAGE, numberOfGenerators, envVariables);
 

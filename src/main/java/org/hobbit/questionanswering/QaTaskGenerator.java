@@ -3,6 +3,7 @@ package org.hobbit.questionanswering;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,16 +19,24 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
 	public static final String EXPERIMENT_TYPE_PARAMETER_KEY = "qa.experiment_type";
 	public static final String EXPERIMENT_TASK_PARAMETER_KEY = "qa.experiment_task";
 	public static final String QUESTION_LANGUAGE_PARAMETER_KEY = "qa.question_language";
+	public static final String NUMBER_OF_DOCUMENTS_PARAMETER_KEY = "qa.number_of_documents";
+	public static final String TIME_FOR_ANSWERING_PARAMETER_KEY = "qa.time_for_answering";
 	public static final String SEED_PARAMETER_KEY = "qa.seed";
     
 	private String experimentTypeName;
 	private String experimentTaskName;
     private String questionLanguage;
+    private int numberOfDocuments;
+    private long timeForAnswering;
 	private long seed;
     private String datasetId;
     
     private QaHelper qaHelper = new QaHelper();
     ArrayList<ArrayList<String>> templateSampleValues = null;
+    
+    ArrayList<byte[]> taskDataList = null;
+    ArrayList<byte[]> answerDataList = null;
+    int taskCounter;
 
     public void init() throws Exception {
     	LOGGER.info("Initializing.");
@@ -95,6 +104,34 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
             throw new Exception(msg);
         }
         
+        //load number of documents from environment
+        if(env.containsKey(NUMBER_OF_DOCUMENTS_PARAMETER_KEY)){
+        	try {
+                numberOfDocuments = Integer.parseInt(env.get(NUMBER_OF_DOCUMENTS_PARAMETER_KEY));
+                LOGGER.info("Got number of documents from the environment parameters: \""+numberOfDocuments+"\"");
+            } catch (NumberFormatException e) {
+            	LOGGER.error("Exception while trying to parse the number of documents. Aborting.", e);
+                throw new IllegalArgumentException("Exception while trying to parse the number of documents. Aborting.", e);
+            }
+        }else{
+        	LOGGER.error("Couldn't get \"" + NUMBER_OF_DOCUMENTS_PARAMETER_KEY + "\" from the environment. Aborting.");
+            throw new IllegalArgumentException("Couldn't get \"" + NUMBER_OF_DOCUMENTS_PARAMETER_KEY + "\" from the environment. Aborting.");
+        }
+        
+        //load time for answering from environment
+        if(env.containsKey(TIME_FOR_ANSWERING_PARAMETER_KEY)){
+        	try {
+        		timeForAnswering = Long.parseLong(env.get(TIME_FOR_ANSWERING_PARAMETER_KEY));
+                LOGGER.info("Got time for answering from the environment parameters: \""+timeForAnswering+"\"");
+            } catch (NumberFormatException e) {
+            	LOGGER.error("Exception while trying to parse the time for answering. Aborting.", e);
+                throw new IllegalArgumentException("Exception while trying to parse the time for answering. Aborting.", e);
+            }
+        }else{
+        	LOGGER.error("Couldn't get \"" + TIME_FOR_ANSWERING_PARAMETER_KEY + "\" from the environment. Aborting.");
+            throw new IllegalArgumentException("Couldn't get \"" + TIME_FOR_ANSWERING_PARAMETER_KEY + "\" from the environment. Aborting.");
+        }
+        
         //load seed from environment
         if(env.containsKey(SEED_PARAMETER_KEY)){
         	try {
@@ -112,6 +149,10 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
         //datasetId
         datasetId = "hobbit_qa_"+this.getHobbitSessionId()+"_"+seed+"_"+experimentTaskName.toLowerCase();
         LOGGER.info("Dataset id is "+datasetId+".");
+        
+        taskCounter = 0;
+        taskDataList = new ArrayList<byte[]>();
+        answerDataList = new ArrayList<byte[]>();
         
         LOGGER.info("Initialized.");
     }
@@ -219,10 +260,41 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
         byte[] taskData = RabbitMQUtils.writeString(qaldFormatStringToSystem);
         byte[] expectedAnswerData = RabbitMQUtils.writeString(qaldFormatStringToEvaluation);
         
-        sendTaskToSystemAdapter(taskId, taskData);
-        long timestamp = System.currentTimeMillis();
-        sendTaskToEvalStorage(taskId, timestamp, expectedAnswerData);
+        taskDataList.add(taskData);
+        answerDataList.add(expectedAnswerData);
 		//TODO caching
+        
+        // send data if numberOfDocuments reached
+        taskCounter++;
+        if(taskCounter == numberOfDocuments){
+        	int amountOfQuestions = 1;
+        	if(taskDataList.size() == answerDataList.size()){
+        		LOGGER.info("Sending Task Data.");
+                for(int i = 0; i<taskDataList.size(); i++){
+                	
+                	for(int t=0; t<amountOfQuestions; t++){
+                		int internal_i = i+t;
+                		String internal_taskId = String.valueOf(internal_i);
+                		long timestamp = System.currentTimeMillis();
+                    	sendTaskToSystemAdapter(internal_taskId, taskDataList.get(internal_i));
+                    	sendTaskToEvalStorage(internal_taskId, timestamp, answerDataList.get(internal_i));
+                    	if(t==amountOfQuestions-1) i+=t;
+                	}
+                	if(experimentTaskName.toLowerCase().equals("largescale")){
+                		amountOfQuestions++;
+                	}
+                	LOGGER.info("Load of Task Data send. Waiting "+timeForAnswering+" milliseconds.");
+                	TimeUnit.MILLISECONDS.sleep(timeForAnswering);
+                }
+                LOGGER.info(numberOfDocuments+" Task Data send.");
+                LOGGER.info("Sending Task Data and Answer Data finished.");
+        	}
+        	else{
+        		String msg = "Generated amount of Answer Data does not fit to amount of Task Data.";
+                LOGGER.error(msg);
+                throw new Exception(msg);
+        	}
+        }
     }
 
     public void close() throws IOException {

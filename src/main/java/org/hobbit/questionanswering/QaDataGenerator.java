@@ -348,7 +348,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
         usedTemplates.clear();
         depletedTemplates.clear();
         
-        LOGGER.info("Data generated.");
+        LOGGER.info("Data Generation finished.");
 	}
 
     public void close() throws IOException {
