@@ -20,45 +20,45 @@ public class QaHelper {
 	}
 	
 	public String addQuestion(String extendedQald, String questionId, String answertype, String aggregation,
-  		   String onlydbo, String hybrid, String language, String question, String keywords){
-		extendedQald += 	"{\n"+
-  			   			"\"id\": \""+questionId+"\",\n"+
-  			   			"\"answertype\": \""+answertype+"\",\n"+
-  			   			"\"aggregation\": \""+aggregation+"\",\n"+
-  			   			"\"onlydbo\": \""+onlydbo+"\",\n"+
-  			   			"\"hybrid\": \""+hybrid+"\",\n"+
-  			   			"\"question\": [\n{\n"+
-  			   			"\"language\": \""+language+"\",\n"+
-  			   			"\"string\": \"" +question+"\",\n"+
-  			   			"\"keywords\": \"" +keywords+"\"\n"+
-  			   			"}\n"+"],\n";
-		return extendedQald;
+	  		   String onlydbo, String hybrid, String language, String question, String keywords){
+			extendedQald += 	"{\n"+
+	  			   			"\"id\": \""+questionId+"\",\n"+
+	  			   			"\"answertype\": \""+answertype+"\",\n"+
+	  			   			"\"aggregation\": \""+aggregation+"\",\n"+
+	  			   			"\"onlydbo\": \""+onlydbo+"\",\n"+
+	  			   			"\"hybrid\": \""+hybrid+"\",\n"+
+	  			   			"\"question\": [\n{\n"+
+	  			   			"\"language\": \""+language+"\",\n"+
+	  			   			"\"string\": \"" +question+"\",\n"+
+	  			   			"\"keywords\": \"" +keywords+"\"\n"+
+	  			   			"}\n"+"],\n";
+			return extendedQald;
 	}
-    
+	
 	public String addQuestionSystem(String extendedQald, String questionId, String answertype, String aggregation,
 	  		   String onlydbo, String hybrid, String language, String question, String keywords){
 			extendedQald += 	"{\n"+
 	  			   			"\"id\": \""+questionId+"\",\n"+
-	  			   			//"\"answertype\": \""+answertype+"\",\n"+
-	  			   			//"\"aggregation\": \""+aggregation+"\",\n"+
-	  			   			//"\"onlydbo\": \""+onlydbo+"\",\n"+
-	  			   			//"\"hybrid\": \""+hybrid+"\",\n"+
+	  			   			"\"answertype\": \""+answertype+"\",\n"+
+	  			   			"\"aggregation\": \""+aggregation+"\",\n"+
+	  			   			"\"onlydbo\": \""+onlydbo+"\",\n"+
+	  			   			"\"hybrid\": \""+hybrid+"\",\n"+
 	  			   			"\"question\": [\n{\n"+
 	  			   			"\"language\": \""+language+"\",\n"+
 	  			   			"\"string\": \"" +question+"\",\n"+
 	  			   			"\"keywords\": \"" +keywords+"\"\n"+
 	  			   			"}\n"+"]\n"+"}\n";
-			return extendedQald;
-		}
+		return extendedQald;
+	}
 	
-    public String addQuery(String extendedQald, String sparql){
+	public String addQuery(String extendedQald, String sparql){
     	extendedQald += "\"query\":{\n"+
   			   			"\"sparql\": \"" +sparql+"\"\n"+
   			   			"},\n";
     	return extendedQald;
     }
     
-    public String addAnswer(String extendedQald, String queryReturn, String varType, String varValue){
+	public String addAnswer(String extendedQald, String queryReturn, String varType, String varValue){
     	String newVarValue="";
     	
     	if(varType.equals("uri")){

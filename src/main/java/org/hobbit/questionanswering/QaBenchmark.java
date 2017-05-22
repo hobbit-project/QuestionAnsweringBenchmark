@@ -232,7 +232,7 @@ public class QaBenchmark extends AbstractBenchmarkController {
         }
 
         //create data generator
-        LOGGER.info("Creating Data Generator.");
+        LOGGER.info("Creating Data Generator "+DATA_GENERATOR_CONTAINER_IMAGE+".");
         String[] envVariables = new String[]{
         		QaDataGenerator.EXPERIMENT_TYPE_PARAMETER_KEY + "=" + experimentType.getName(),
         		QaDataGenerator.EXPERIMENT_TASK_PARAMETER_KEY + "=" + experimentTaskName,
@@ -243,7 +243,7 @@ public class QaBenchmark extends AbstractBenchmarkController {
         createDataGenerators(DATA_GENERATOR_CONTAINER_IMAGE, numberOfGenerators, envVariables);
 
         //create task generator
-        LOGGER.info("Creating Task Generator.");
+        LOGGER.info("Creating Task Generator +"+TASK_GENERATOR_CONTAINER_IMAGE+".");
         envVariables = new String[] {
         		QaTaskGenerator.EXPERIMENT_TYPE_PARAMETER_KEY + "=" + experimentType.name(),
         		QaTaskGenerator.EXPERIMENT_TASK_PARAMETER_KEY + "=" + experimentTaskName,
@@ -254,7 +254,7 @@ public class QaBenchmark extends AbstractBenchmarkController {
         createTaskGenerators(TASK_GENERATOR_CONTAINER_IMAGE, numberOfGenerators, envVariables);
 
         //create evaluation storage
-        LOGGER.info("Creating Default Evaluation Storage.");
+        LOGGER.info("Creating Default Evaluation Storage "+DEFAULT_EVAL_STORAGE_IMAGE+".");
         createEvaluationStorage();
 
         //wait for all components to finish their initialization
@@ -271,12 +271,17 @@ public class QaBenchmark extends AbstractBenchmarkController {
         sendToCmdQueue(Commands.TASK_GENERATOR_START_SIGNAL);
         sendToCmdQueue(Commands.DATA_GENERATOR_START_SIGNAL);
 
-        LOGGER.info("Waiting for Generators and System to finish.");
+        LOGGER.info("Waiting for Generators to finish.");
         waitForDataGenToFinish();
         waitForTaskGenToFinish();
-        waitForSystemToFinish();
+        LOGGER.info("Waiting for System to finish.");
+        if(experimentTaskName.equalsIgnoreCase("largescale")){
+        	waitForSystemToFinish(60000); //wait up to 1 more minute
+        }else{
+        	waitForSystemToFinish(300000); //wait up to 10 more minutes
+        }
         
-        LOGGER.info("Creating Evaluation Module and waiting for evaluation components to finish.");
+        LOGGER.info("Creating Evaluation Module "+EVALUATION_MODULE_CONTAINER_IMAGE+" and waiting for evaluation components to finish.");
         createEvaluationModule(EVALUATION_MODULE_CONTAINER_IMAGE, new String[] { "qa.experiment_type" + "=" + experimentType.name() });
         waitForEvalComponentsToFinish();
         
