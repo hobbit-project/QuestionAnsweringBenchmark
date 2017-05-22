@@ -1,6 +1,6 @@
 FROM java 
 
-ADD target/questionanswering-0.0.1-SNAPSHOT.jar /qa/qa.jar 
+ADD target/questionanswering-1.0-SNAPSHOT.jar /qa/qa.jar 
 ADD data/largescaleSampleValues.dat /qa/data/largescaleSampleValues.dat
 
 WORKDIR /qa 

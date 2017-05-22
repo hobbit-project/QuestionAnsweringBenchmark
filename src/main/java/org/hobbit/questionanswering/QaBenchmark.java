@@ -19,7 +19,7 @@ public class QaBenchmark extends AbstractBenchmarkController {
 	
 	private static final String DATA_GENERATOR_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/cmartens/qadatagenerator";
 	private static final String TASK_GENERATOR_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/cmartens/qataskgenerator";
-	private static final String EVALUATION_MODULE_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/conrads/qaevaluationmodule";
+	private static  String EVALUATION_MODULE_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/conrads/qaevaluationmodule";
 	
 	protected static final String gerbilUri = "http://w3id.org/gerbil/vocab#";
 	protected static final String gerbilQaUri = "http://w3id.org/gerbil/qa/hobbit/vocab#";
@@ -28,16 +28,24 @@ public class QaBenchmark extends AbstractBenchmarkController {
 	protected static final Resource LARGESCALE = qaResource("largescaleTask");
 	protected static final Resource MULTILINGUAL = qaResource("multilingualTask");
 	protected static final Resource ENGLISH = qaResource("EnLanguage");
+	protected static final Resource FARSI = qaResource("FaLanguage");
 	protected static final Resource GERMAN = qaResource("DeLanguage");
+	protected static final Resource SPANISH = qaResource("EsLanguage");
 	protected static final Resource ITALIAN = qaResource("ItLanguage");
 	protected static final Resource FRENCH = qaResource("FrLanguage");
+	protected static final Resource DUTCH = qaResource("NlLanguage");
+	protected static final Resource ROMANIAN = qaResource("RoLanguage");
+	
 	private ExperimentType experimentType;
+	
 	private String experimentTypeName;
 	private String experimentTaskName;
 	private String questionLanguage;
 	private String sparqlService;
-	private int numberOfDocuments;
-	private long timeForAnsweringQuestion;
+	
+	private int numberOfQuestionSets;
+	private int numberOfQuestions;
+	private long timeForAnswering;
 	private long seed;
 	
 	//create single data and task generator
@@ -133,6 +141,10 @@ public class QaBenchmark extends AbstractBenchmarkController {
                 	else if (FRENCH.getURI().equals(uri)) {
                         questionLanguage = "fr";
                     }
+                	else{
+                    	questionLanguage = "en";
+                    	LOGGER.info("Chosen question language is not supported yet. Setting question language to \""+questionLanguage+"\".");
+                    }
                     LOGGER.info("Got question language from the parameter model: \""+questionLanguage+"\"");
                 } catch (Exception e) {
                     LOGGER.error("Exception while parsing parameter.", e);
@@ -147,48 +159,48 @@ public class QaBenchmark extends AbstractBenchmarkController {
     		LOGGER.info("Setting language to default value: \"en\"");
     	}
         
-        //load numberOfDocuments from benchmark model
-        numberOfDocuments = -1;
-        iterator = benchmarkParamModel.listObjectsOfProperty(benchmarkParamModel.getProperty(gerbilQaUri+"hasNumberOfDocuments"));
+        //load numberOfQuestionSets from benchmark model
+        numberOfQuestionSets = -1;
+        iterator = benchmarkParamModel.listObjectsOfProperty(benchmarkParamModel.getProperty(gerbilQaUri+"hasNumberOfQuestionSets"));
         if(iterator.hasNext()) {
         	try {
-        		numberOfDocuments = iterator.next().asLiteral().getInt();
-                LOGGER.info("Got number of documents from the parameter model: \""+numberOfDocuments+"\"");
+        		numberOfQuestionSets = iterator.next().asLiteral().getInt();
+                LOGGER.info("Got number of question sets from the parameter model: \""+numberOfQuestionSets+"\"");
             } catch (Exception e) {
                 LOGGER.error("Exception while parsing parameter.", e);
             }
         }
-        //check numberOfDocuments
-        if (numberOfDocuments < 0) {
-        	LOGGER.error("Couldn't get the number of documents from the parameter model. Using default value for type \""+experimentType+"\".");
-        	if(!experimentTaskName.equals("largescale")){
-        		numberOfDocuments = 30;
-        	}else{ numberOfDocuments = 465; }
-        	LOGGER.info("Setting number of documents to default value: \""+numberOfDocuments+"\"");
+        //check numberOfQuestionSets, set numberOfQuestions
+        if (numberOfQuestionSets < 0) {
+        	LOGGER.error("Couldn't get the number of question sets from the parameter model. Using default value.");
+        	numberOfQuestionSets = 30;
+        	LOGGER.info("Setting number of question sets to default value: \""+numberOfQuestionSets+"\"");
         }else{
         	if(experimentTaskName.equals("largescale")){
-        		numberOfDocuments = (numberOfDocuments*((numberOfDocuments+1)))/2;
-        		LOGGER.info("For largescale: chosen number of loads of questions equals to "+numberOfDocuments+" questions.");
-        		LOGGER.info("Updated number of questions to \""+numberOfDocuments+"\".");
+        		numberOfQuestions = (numberOfQuestionSets*((numberOfQuestionSets+1)))/2;
+        		LOGGER.info("For large-scale, chosen number of "+numberOfQuestionSets+" question sets equals to "+numberOfQuestionSets+" questions.");
+        	}else{
+        		numberOfQuestions = numberOfQuestionSets;
         	}
+        	LOGGER.info("Updated number of questions to \""+numberOfQuestions+"\".");
         }
         
-        //load timeForAnsweringQuestion from benchmark model
-        timeForAnsweringQuestion = -1;
+        //load timeForAnswering from benchmark model
+        timeForAnswering = -1;
         iterator = benchmarkParamModel.listObjectsOfProperty(benchmarkParamModel.getProperty(gerbilQaUri+"hasAnsweringTime"));
         if(iterator.hasNext()) {
         	try {
-        		timeForAnsweringQuestion = iterator.next().asLiteral().getLong();
-                LOGGER.info("Got time for answering question from the parameter model: \""+timeForAnsweringQuestion+"\"");
+        		timeForAnswering = iterator.next().asLiteral().getLong();
+                LOGGER.info("Got time for answering one question set from the parameter model: \""+timeForAnswering+"\"");
             } catch (Exception e) {
                 LOGGER.error("Exception while parsing parameter.", e);
             }
         }
-        //check timeForAnsweringQuestion
-        if (timeForAnsweringQuestion < 0) {
-        	LOGGER.error("Couldn't get the time for answering a question from the parameter model. Using default value.");
-        	timeForAnsweringQuestion = 60000;
-        	LOGGER.info("Setting time for answering a question to default value: \""+timeForAnsweringQuestion+"\"");
+        //check timeForAnswering
+        if (timeForAnswering < 0) {
+        	LOGGER.error("Couldn't get the time for answering one question set from the parameter model. Using default value.");
+        	timeForAnswering = 60000;
+        	LOGGER.info("Setting time for answering one question set to default value: \""+timeForAnswering+"\"");
         }
         
         //load seed from benchmark model
@@ -237,7 +249,7 @@ public class QaBenchmark extends AbstractBenchmarkController {
         		QaDataGenerator.EXPERIMENT_TYPE_PARAMETER_KEY + "=" + experimentType.getName(),
         		QaDataGenerator.EXPERIMENT_TASK_PARAMETER_KEY + "=" + experimentTaskName,
         		QaDataGenerator.QUESTION_LANGUAGE_PARAMETER_KEY + "=" + questionLanguage,
-                QaDataGenerator.NUMBER_OF_DOCUMENTS_PARAMETER_KEY + "=" + numberOfDocuments,
+        		QaDataGenerator.NUMBER_OF_QUESTIONS_PARAMETER_KEY + "=" + numberOfQuestions,
                 QaDataGenerator.SEED_PARAMETER_KEY + "=" + seed,
                 QaDataGenerator.SPARQL_SERVICE_PARAMETER_KEY + "=" + sparqlService,};
         createDataGenerators(DATA_GENERATOR_CONTAINER_IMAGE, numberOfGenerators, envVariables);
@@ -245,11 +257,11 @@ public class QaBenchmark extends AbstractBenchmarkController {
         //create task generator
         LOGGER.info("Creating Task Generator +"+TASK_GENERATOR_CONTAINER_IMAGE+".");
         envVariables = new String[] {
-        		QaTaskGenerator.EXPERIMENT_TYPE_PARAMETER_KEY + "=" + experimentType.name(),
+        		QaTaskGenerator.EXPERIMENT_TYPE_PARAMETER_KEY + "=" + experimentType.getName(),
         		QaTaskGenerator.EXPERIMENT_TASK_PARAMETER_KEY + "=" + experimentTaskName,
         		QaTaskGenerator.QUESTION_LANGUAGE_PARAMETER_KEY + "=" + questionLanguage,
-        		QaTaskGenerator.NUMBER_OF_DOCUMENTS_PARAMETER_KEY + "=" + numberOfDocuments,
-        		QaTaskGenerator.TIME_FOR_ANSWERING_PARAMETER_KEY + "=" + timeForAnsweringQuestion,
+        		QaTaskGenerator.NUMBER_OF_QUESTIONS_PARAMETER_KEY + "=" + numberOfQuestions,
+        		QaTaskGenerator.TIME_FOR_ANSWERING_PARAMETER_KEY + "=" + timeForAnswering,
 				QaTaskGenerator.SEED_PARAMETER_KEY + "=" + seed};
         createTaskGenerators(TASK_GENERATOR_CONTAINER_IMAGE, numberOfGenerators, envVariables);
 
@@ -278,7 +290,7 @@ public class QaBenchmark extends AbstractBenchmarkController {
         if(experimentTaskName.equalsIgnoreCase("largescale")){
         	waitForSystemToFinish(60000); //wait up to 1 more minute
         }else{
-        	waitForSystemToFinish(300000); //wait up to 10 more minutes
+        	waitForSystemToFinish(600000); //wait up to 10 more minutes
         }
         
         LOGGER.info("Creating Evaluation Module "+EVALUATION_MODULE_CONTAINER_IMAGE+" and waiting for evaluation components to finish.");

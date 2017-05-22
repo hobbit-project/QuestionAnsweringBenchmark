@@ -19,14 +19,14 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
 	public static final String EXPERIMENT_TYPE_PARAMETER_KEY = "qa.experiment_type";
 	public static final String EXPERIMENT_TASK_PARAMETER_KEY = "qa.experiment_task";
 	public static final String QUESTION_LANGUAGE_PARAMETER_KEY = "qa.question_language";
-	public static final String NUMBER_OF_DOCUMENTS_PARAMETER_KEY = "qa.number_of_documents";
+	public static final String NUMBER_OF_QUESTIONS_PARAMETER_KEY = "qa.number_of_questions";
 	public static final String TIME_FOR_ANSWERING_PARAMETER_KEY = "qa.time_for_answering";
 	public static final String SEED_PARAMETER_KEY = "qa.seed";
     
 	private String experimentTypeName;
 	private String experimentTaskName;
     private String questionLanguage;
-    private int numberOfDocuments;
+    private int numberOfQuestions;
     private long timeForAnswering;
 	private long seed;
     private String datasetId;
@@ -104,18 +104,18 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
             throw new Exception(msg);
         }
         
-        //load number of documents from environment
-        if(env.containsKey(NUMBER_OF_DOCUMENTS_PARAMETER_KEY)){
+        //load number of questions from environment
+        if(env.containsKey(NUMBER_OF_QUESTIONS_PARAMETER_KEY)){
         	try {
-                numberOfDocuments = Integer.parseInt(env.get(NUMBER_OF_DOCUMENTS_PARAMETER_KEY));
-                LOGGER.info("Got number of documents from the environment parameters: \""+numberOfDocuments+"\"");
+                numberOfQuestions = Integer.parseInt(env.get(NUMBER_OF_QUESTIONS_PARAMETER_KEY));
+                LOGGER.info("Got number of questions from the environment parameters: \""+numberOfQuestions+"\"");
             } catch (NumberFormatException e) {
-            	LOGGER.error("Exception while trying to parse the number of documents. Aborting.", e);
-                throw new IllegalArgumentException("Exception while trying to parse the number of documents. Aborting.", e);
+            	LOGGER.error("Exception while trying to parse the number of questions. Aborting.", e);
+                throw new IllegalArgumentException("Exception while trying to parse the number of questions. Aborting.", e);
             }
         }else{
-        	LOGGER.error("Couldn't get \"" + NUMBER_OF_DOCUMENTS_PARAMETER_KEY + "\" from the environment. Aborting.");
-            throw new IllegalArgumentException("Couldn't get \"" + NUMBER_OF_DOCUMENTS_PARAMETER_KEY + "\" from the environment. Aborting.");
+        	LOGGER.error("Couldn't get \"" + NUMBER_OF_QUESTIONS_PARAMETER_KEY + "\" from the environment. Aborting.");
+            throw new IllegalArgumentException("Couldn't get \"" + NUMBER_OF_QUESTIONS_PARAMETER_KEY + "\" from the environment. Aborting.");
         }
         
         //load time for answering from environment
@@ -264,9 +264,9 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
         answerDataList.add(expectedAnswerData);
 		//TODO caching
         
-        // send data if numberOfDocuments reached
+        // send data if numberOfQuestions reached
         taskCounter++;
-        if(taskCounter == numberOfDocuments){
+        if(taskCounter == numberOfQuestions){
         	int amountOfQuestions = 1;
         	if(taskDataList.size() == answerDataList.size()){
         		LOGGER.info("Sending Task Data.");
@@ -283,10 +283,10 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
                 	if(experimentTaskName.toLowerCase().equals("largescale")){
                 		amountOfQuestions++;
                 	}
-                	LOGGER.info("Load of Task Data send. Waiting "+timeForAnswering+" milliseconds.");
+                	LOGGER.info("Set of Task Data send. Waiting "+timeForAnswering+" milliseconds.");
                 	TimeUnit.MILLISECONDS.sleep(timeForAnswering);
                 }
-                LOGGER.info(numberOfDocuments+" Task Data send.");
+                LOGGER.info(numberOfQuestions+" sets of Task Data send.");
                 LOGGER.info("Sending Task Data and Answer Data finished.");
         	}
         	else{

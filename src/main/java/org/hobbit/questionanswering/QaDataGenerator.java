@@ -23,7 +23,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
 	public static final String EXPERIMENT_TYPE_PARAMETER_KEY = "qa.experiment_type";
 	public static final String EXPERIMENT_TASK_PARAMETER_KEY = "qa.experiment_task";
     public static final String QUESTION_LANGUAGE_PARAMETER_KEY = "qa.question_language";
-    public static final String NUMBER_OF_DOCUMENTS_PARAMETER_KEY = "qa.number_of_documents";
+    public static final String NUMBER_OF_QUESTIONS_PARAMETER_KEY = "qa.number_of_questions";
     public static final String SEED_PARAMETER_KEY = "qa.seed";
     public static final String SPARQL_SERVICE_PARAMETER_KEY = "qa.sparql_service";
     
@@ -31,7 +31,8 @@ public class QaDataGenerator extends AbstractDataGenerator {
 	private String experimentTaskName;
     private String questionLanguage;
     private String sparqlService;
-    private int numberOfDocuments;
+    
+    private int numberOfQuestions;
     private long seed;
 
     private QaHelper qaHelper = new QaHelper();
@@ -101,24 +102,24 @@ public class QaDataGenerator extends AbstractDataGenerator {
             throw new Exception(msg);
         }
         
-        //load number of documents from environment
-        if(env.containsKey(NUMBER_OF_DOCUMENTS_PARAMETER_KEY)){
+        //load number of questions from environment
+        if(env.containsKey(NUMBER_OF_QUESTIONS_PARAMETER_KEY)){
         	try {
-                numberOfDocuments = Integer.parseInt(env.get(NUMBER_OF_DOCUMENTS_PARAMETER_KEY));
-                LOGGER.info("Got number of documents from the environment parameters: \""+numberOfDocuments+"\"");
+                numberOfQuestions = Integer.parseInt(env.get(NUMBER_OF_QUESTIONS_PARAMETER_KEY));
+                LOGGER.info("Got number of questions from the environment parameters: \""+numberOfQuestions+"\"");
             } catch (NumberFormatException e) {
-            	LOGGER.error("Exception while trying to parse the number of documents. Aborting.", e);
-                throw new IllegalArgumentException("Exception while trying to parse the number of documents. Aborting.", e);
+            	LOGGER.error("Exception while trying to parse the number of questions. Aborting.", e);
+                throw new IllegalArgumentException("Exception while trying to parse the number of questions. Aborting.", e);
             }
         }else{
-        	LOGGER.error("Couldn't get \"" + NUMBER_OF_DOCUMENTS_PARAMETER_KEY + "\" from the environment. Aborting.");
-            throw new IllegalArgumentException("Couldn't get \"" + NUMBER_OF_DOCUMENTS_PARAMETER_KEY + "\" from the environment. Aborting.");
+        	LOGGER.error("Couldn't get \"" + NUMBER_OF_QUESTIONS_PARAMETER_KEY + "\" from the environment. Aborting.");
+            throw new IllegalArgumentException("Couldn't get \"" + NUMBER_OF_QUESTIONS_PARAMETER_KEY + "\" from the environment. Aborting.");
         }
         if(!experimentTaskName.equalsIgnoreCase("largescale")){
-        	if(numberOfDocuments>templates.size()){
-        		numberOfDocuments = templates.size();
-        		LOGGER.error("Chosen number of documents is too high.");
-        		LOGGER.info("Reducing number of documents to "+numberOfDocuments+".");
+        	if(numberOfQuestions>templates.size()){
+        		numberOfQuestions = templates.size();
+        		LOGGER.error("Chosen number of questions is too high.");
+        		LOGGER.info("Reducing number of questions to "+numberOfQuestions+".");
         	}
         }
         
@@ -336,7 +337,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
 				LOGGER.error(msg);
 				throw new Exception(msg);
 	        }
-	        if(queryCounter>=numberOfDocuments) { notEnoughDataGenerated = false; }
+	        if(queryCounter>=numberOfQuestions) { notEnoughDataGenerated = false; }
 	        if(queryCounter%templatesSize==0 || usedTemplates.size()%templatesSize==0){
 	        	usedTemplates.clear();
 				usedTemplates.addAll(depletedTemplates);
