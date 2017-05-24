@@ -160,6 +160,9 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
     protected void generateTask(byte[] data) throws Exception {
     	String taskId = getNextTaskId();
     	
+    	String englishLanguage, englishQuestion, englishKeywords;
+    	englishLanguage = englishQuestion = englishKeywords = "metainfo-en.missing";
+    	
     	String stringArray = RabbitMQUtils.readString(data);
 		String[] qqr = stringArray.split("\\|");
 		String questionString = qqr[1];
@@ -207,6 +210,11 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
             hybrid = qqr[7];
             answerhead = qqr[8];
             keywords = qqr[9];
+            if(experimentTaskName.equalsIgnoreCase("multilingual")){
+            	englishLanguage = "en";
+            	englishQuestion = qqr[10];
+            	englishKeywords = qqr[11];
+            }
             if(answertype.equals("boolean")) { resulttype = "boolean"; }
 			if(answertype.equals("resource")) { resulttype = "uri"; }
 			else if(!answertype.equals("") && !resulttype.equals("boolean") ) { resulttype = "literal"; }
@@ -222,7 +230,7 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
         	qaldFormatStringToSystem = qaHelper.addFoot(qaldFormatStringToSystem);
         	
         	qaldFormatStringToEvaluation = qaHelper.addQuestion(qaldFormatStringToEvaluation, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
-        	qaldFormatStringToEvaluation = qaHelper.addQuery(qaldFormatStringToEvaluation, queryString);
+        	qaldFormatStringToEvaluation = qaHelper.addPseudoQuery(qaldFormatStringToEvaluation, queryString);
         	if(singleAnswer){ qaldFormatStringToEvaluation = qaHelper.addAnswer(qaldFormatStringToEvaluation, answerhead, resulttype, resultString); }
 			else{
 				String[] results = resultString.split(";");
@@ -247,7 +255,7 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
         	qaldFormatStringToSystem = qaHelper.addQuestionSystem(qaldFormatStringToSystem, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
         	qaldFormatStringToSystem = qaHelper.addFoot(qaldFormatStringToSystem);
         	
-        	qaldFormatStringToEvaluation = qaHelper.addQuestion(qaldFormatStringToEvaluation, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
+        	qaldFormatStringToEvaluation = qaHelper.addQuestionMultilingualEvaluation(qaldFormatStringToEvaluation, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords, englishLanguage, englishQuestion, englishKeywords);
         	qaldFormatStringToEvaluation = qaHelper.addQuery(qaldFormatStringToEvaluation, queryString);
         	if(singleAnswer) { qaldFormatStringToEvaluation = qaHelper.addAnswer(qaldFormatStringToEvaluation, answerhead, resulttype, resultString); }
 			else{

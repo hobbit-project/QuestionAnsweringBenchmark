@@ -38,7 +38,6 @@ public class QaBenchmark extends AbstractBenchmarkController {
 	
 	private ExperimentType experimentType;
 	
-	private String experimentTypeName;
 	private String experimentTaskName;
 	private String questionLanguage;
 	private String sparqlService;
@@ -64,33 +63,12 @@ public class QaBenchmark extends AbstractBenchmarkController {
     	LOGGER.info("Initializing.");
     	super.init();
     	
-    	LOGGER.info("Loading parameters from benchmark model.");
+    	experimentType = ExperimentType.QA;
     	
-    	//load experimentType from benchmark model
-        NodeIterator iterator = benchmarkParamModel.listObjectsOfProperty(benchmarkParamModel.getProperty(gerbilQaUri+"hasExperimentType"));
-        if (iterator.hasNext()) {
-            try {
-            	Resource resource = iterator.next().asResource();
-            	if (resource == null) { LOGGER.error("Got null resource."); }
-            	String uri = resource.getURI();
-            	if (QA.getURI().equals(uri)) {
-                    experimentType = ExperimentType.QA;
-                }
-                experimentTypeName = experimentType.getName();
-                LOGGER.info("Got experiment type from the parameter model: \""+experimentTypeName+"\"");
-            } catch (Exception e) {
-                LOGGER.error("Exception while parsing parameter.", e);
-            }
-        }
-        //check experimentType
-        if(!experimentType.equals(ExperimentType.QA)){
-        	String msg = "Couldn't get valid experiment type from the parameter model. Must be "+ExperimentType.QA.getName()+". Aborting.";
-        	LOGGER.error(msg);
-        	throw new Exception(msg);
-        }
+    	LOGGER.info("Loading parameters from benchmark model.");
         
         //load experimentTask from benchmark model
-        iterator = benchmarkParamModel.listObjectsOfProperty(benchmarkParamModel.getProperty(gerbilQaUri+"hasExperimentTask"));
+        NodeIterator iterator = benchmarkParamModel.listObjectsOfProperty(benchmarkParamModel.getProperty(gerbilQaUri+"hasExperimentTask"));
         if (iterator.hasNext()) {
             try {
             	Resource resource = iterator.next().asResource();

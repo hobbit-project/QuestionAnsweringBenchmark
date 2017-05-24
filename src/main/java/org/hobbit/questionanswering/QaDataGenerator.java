@@ -228,8 +228,13 @@ public class QaDataGenerator extends AbstractDataGenerator {
 	    		}
 			}
     		
+			//for multilingual, always send english
+			String englishQuestion, englishKeywords;
+			englishQuestion = englishKeywords = "metainfo-en.missing";
+			
     		String questionWord = "";
     		question = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(1);
+    		englishQuestion = question;
         	questionWord = question.split(" ")[0].toLowerCase();
         	query = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(2);
 			
@@ -243,6 +248,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
 	            hybrid = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(6);
 	            answerhead = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(7);
 	            keywords = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(8);
+	            englishKeywords = keywords;
 	            if(experimentTaskName.toLowerCase().equals("hybrid")){
 	            	hybridResult = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(9);
 	            	hybridResult = hybridResult.replaceAll("&result&", ";");
@@ -322,7 +328,8 @@ public class QaDataGenerator extends AbstractDataGenerator {
 									break;
 	        		}
 	        		byteArrayDataGenerator2TaskGenerator = RabbitMQUtils.writeString(pseudoRandomTemplate + "|" + question + "|" + query + "|" + result
-	        				+ "|" + answertype + "|" + aggregation+ "|" + onlydbo + "|" + hybrid+ "|" + answerhead + "|" + keywords);
+	        				+ "|" + answertype + "|" + aggregation+ "|" + onlydbo + "|" + hybrid+ "|" + answerhead + "|" + keywords
+	        				+ "|" + englishQuestion + "|" + englishKeywords);
 	    		}
 	        	else if(experimentTaskName.toLowerCase().equals("hybrid")){
 	        		byteArrayDataGenerator2TaskGenerator = RabbitMQUtils.writeString(pseudoRandomTemplate + "|" + question + "|" + query + "|" + hybridResult
