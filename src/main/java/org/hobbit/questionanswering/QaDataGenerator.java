@@ -228,7 +228,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
 	    		}
 			}
     		
-			//for multilingual, always send english
+			//for multilingual, additionally send english
 			String englishQuestion, englishKeywords;
 			englishQuestion = englishKeywords = "metainfo-en.missing";
 			
@@ -238,8 +238,8 @@ public class QaDataGenerator extends AbstractDataGenerator {
         	questionWord = question.split(" ")[0].toLowerCase();
         	query = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(2);
 			
-        	String answertype, aggregation, onlydbo, hybrid, answerhead, keywords, hybridResult;
-        	answertype = aggregation = onlydbo = hybrid = answerhead = keywords = hybridResult = "metainfo.missing";
+        	String answertype, aggregation, onlydbo, hybrid, answerhead, keywords, hybridResult, wikidataResult, wikidataDatatype;
+        	answertype = aggregation = onlydbo = hybrid = answerhead = keywords = hybridResult = wikidataResult = wikidataDatatype = "metainfo.missing";
         	
         	if(!experimentTaskName.toLowerCase().equals("largescale")){
 	        	answertype = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(3);
@@ -253,15 +253,19 @@ public class QaDataGenerator extends AbstractDataGenerator {
 	            	hybridResult = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(9);
 	            	hybridResult = hybridResult.replaceAll("&result&", ";");
 	            }
+	            if(experimentTaskName.toLowerCase().equals("wikidata")){
+	            	wikidataResult = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(9);
+	            	wikidataResult = wikidataResult.replaceAll("&result&", ";");
+	            }
         	}
     		
         	boolean legalQuery = false;
-        	if(!experimentTaskName.toLowerCase().equals("hybrid")){
+        	if(!experimentTaskName.toLowerCase().equals("hybrid") && !experimentTaskName.toLowerCase().equals("wikidata")){
         		legalQuery = true;
         		result = "some result.";
 				Query sparqlQuery = QueryFactory.create(query);
 				QueryExecution qexec = QueryExecutionFactory.sparqlService(sparqlService, sparqlQuery);
-				qexec.setTimeout(10000);
+				qexec.setTimeout(50000);
 				try {
 					if(questionWord.equals("is") || questionWord.equals("are")
 							|| questionWord.equals("was") || questionWord.equals("were")
@@ -334,6 +338,10 @@ public class QaDataGenerator extends AbstractDataGenerator {
 	        	else if(experimentTaskName.toLowerCase().equals("hybrid")){
 	        		byteArrayDataGenerator2TaskGenerator = RabbitMQUtils.writeString(pseudoRandomTemplate + "|" + question + "|" + query + "|" + hybridResult
 	        				+ "|" + answertype + "|" + aggregation+ "|" + onlydbo + "|" + hybrid+ "|" + answerhead + "|" + keywords);
+	        	}
+	        	else if(experimentTaskName.toLowerCase().equals("wikidata")){
+	        		byteArrayDataGenerator2TaskGenerator = RabbitMQUtils.writeString(pseudoRandomTemplate + "|" + question + "|" + query + "|" + wikidataResult
+	        				+ "|" + answertype + "|" + aggregation+ "|" + onlydbo + "|" + hybrid+ "|" + answerhead + "|" + keywords + "|" + wikidataDatatype);
 	        	}
  		        sendDataToTaskGenerator(byteArrayDataGenerator2TaskGenerator);
  	            queryCounter++;

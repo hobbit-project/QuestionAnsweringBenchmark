@@ -174,8 +174,8 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
 		if(resultString.contains(";")) singleAnswer = false;
 		
 		String resulttype = "resulttype.missing";
-		String answertype, aggregation, onlydbo, hybrid, answerhead, keywords;
-		answertype = aggregation = onlydbo = hybrid = answerhead = keywords = "metainfo.missing";
+		String answertype, aggregation, onlydbo, hybrid, answerhead, keywords, datatype;
+		answertype = aggregation = onlydbo = hybrid = answerhead = keywords = datatype = "metainfo.missing";
 		
 		if(experimentTaskName.toLowerCase().equals("largescale")){
 			answertype = templateSampleValues.get(templateId).get(2);
@@ -214,6 +214,8 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
             	englishLanguage = "en";
             	englishQuestion = qqr[10];
             	englishKeywords = qqr[11];
+            }else if(experimentTaskName.equalsIgnoreCase("wikidata")){
+            	datatype = qqr[10];
             }
             if(answertype.equals("boolean")) { resulttype = "boolean"; }
 			if(answertype.equals("resource")) { resulttype = "uri"; }
@@ -261,6 +263,19 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
 			else{
 				String[] results = resultString.split(";");
 				qaldFormatStringToEvaluation = qaHelper.addMultipleAnswers(qaldFormatStringToEvaluation, answerhead, resulttype, results);
+			}
+        	qaldFormatStringToEvaluation = qaHelper.addFoot(qaldFormatStringToEvaluation);
+        }
+        else if(experimentTaskName.toLowerCase().equals("wikidata")){
+        	qaldFormatStringToSystem = qaHelper.addQuestionSystem(qaldFormatStringToSystem, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
+        	qaldFormatStringToSystem = qaHelper.addFoot(qaldFormatStringToSystem);
+        	
+        	qaldFormatStringToEvaluation = qaHelper.addQuestionMultilingualEvaluation(qaldFormatStringToEvaluation, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords, englishLanguage, englishQuestion, englishKeywords);
+        	qaldFormatStringToEvaluation = qaHelper.addQuery(qaldFormatStringToEvaluation, queryString);
+        	if(singleAnswer) { qaldFormatStringToEvaluation = qaHelper.addAnswerWikidata(qaldFormatStringToEvaluation, answerhead, resulttype, resultString, datatype); }
+			else{
+				String[] results = resultString.split(";");
+				qaldFormatStringToEvaluation = qaHelper.addMultipleAnswersWikidata(qaldFormatStringToEvaluation, answerhead, resulttype, results, datatype);
 			}
         	qaldFormatStringToEvaluation = qaHelper.addFoot(qaldFormatStringToEvaluation);
         }

@@ -27,6 +27,7 @@ public class QaBenchmark extends AbstractBenchmarkController {
 	protected static final Resource HYBRID = qaResource("hybridTask");
 	protected static final Resource LARGESCALE = qaResource("largescaleTask");
 	protected static final Resource MULTILINGUAL = qaResource("multilingualTask");
+	protected static final Resource WIKIDATA = qaResource("wikidataTask");
 	protected static final Resource ENGLISH = qaResource("EnLanguage");
 	protected static final Resource FARSI = qaResource("FaLanguage");
 	protected static final Resource GERMAN = qaResource("DeLanguage");
@@ -83,14 +84,17 @@ public class QaBenchmark extends AbstractBenchmarkController {
             	if (MULTILINGUAL.getURI().equals(uri)) {
                     experimentTaskName = "multilingual";
                 }
+            	if (WIKIDATA.getURI().equals(uri)) {
+                    experimentTaskName = "wikidata";
+                }
                 LOGGER.info("Got experiment task from the parameter model: \""+experimentTaskName+"\"");
             } catch (Exception e) {
                 LOGGER.error("Exception while parsing parameter.", e);
             }
         }
         //check experimentTaskName
-        if(!experimentTaskName.equalsIgnoreCase("hybrid") && !experimentTaskName.equalsIgnoreCase("largescale") && !experimentTaskName.equalsIgnoreCase("multilingual")) {
-        	String msg = "Couldn't get the experiment task from the parameter model. Must be \"hybrid\", \"largescale\" or \"multilingual\". Aborting.";
+        if(!experimentTaskName.equalsIgnoreCase("hybrid") && !experimentTaskName.equalsIgnoreCase("largescale") && !experimentTaskName.equalsIgnoreCase("multilingual") && !experimentTaskName.equalsIgnoreCase("wikidata")) {
+        	String msg = "Couldn't get the experiment task from the parameter model. Must be \"hybrid\", \"largescale\" or \"multilingual\" or \"wikidata\". Aborting.";
         	LOGGER.error(msg);
         	throw new Exception(msg);
         }
@@ -136,6 +140,13 @@ public class QaBenchmark extends AbstractBenchmarkController {
     		questionLanguage = "en";
     		LOGGER.info("Setting language to default value: \"en\"");
     	}
+        //yet supported languages
+        if(!questionLanguage.equalsIgnoreCase("en") && !questionLanguage.equalsIgnoreCase("de")
+        		&& !questionLanguage.equalsIgnoreCase("it") && !questionLanguage.equalsIgnoreCase("fr")){
+        	LOGGER.error("Chosen language is not supported, yet.");
+    		questionLanguage = "en";
+    		LOGGER.info("Setting language to default value: \"en\"");
+        }
         
         //load numberOfQuestionSets from benchmark model
         numberOfQuestionSets = -1;
@@ -151,16 +162,20 @@ public class QaBenchmark extends AbstractBenchmarkController {
         //check numberOfQuestionSets, set numberOfQuestions
         if (numberOfQuestionSets < 0) {
         	LOGGER.error("Couldn't get the number of question sets from the parameter model. Using default value.");
-        	numberOfQuestionSets = 30;
+        	if(experimentTaskName.equals("largescale")){
+        		numberOfQuestionSets = 30;
+        	}else{
+        		numberOfQuestionSets = 50;
+        	}
         	LOGGER.info("Setting number of question sets to default value: \""+numberOfQuestionSets+"\"");
         }else{
         	if(experimentTaskName.equals("largescale")){
         		numberOfQuestions = (numberOfQuestionSets*((numberOfQuestionSets+1)))/2;
-        		LOGGER.info("For large-scale, chosen number of "+numberOfQuestionSets+" question sets equals to "+numberOfQuestionSets+" questions.");
+        		LOGGER.info("For large-scale, chosen number of "+numberOfQuestionSets+" question sets equals to "+numberOfQuestions+" questions.");
         	}else{
         		numberOfQuestions = numberOfQuestionSets;
         	}
-        	LOGGER.info("Updated number of questions to \""+numberOfQuestions+"\".");
+        	LOGGER.info("Number of questions is set to \""+numberOfQuestions+"\".");
         }
         
         //load timeForAnswering from benchmark model
