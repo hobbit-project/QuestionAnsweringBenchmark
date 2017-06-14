@@ -262,7 +262,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
         	boolean legalQuery = false;
         	if(!experimentTaskName.toLowerCase().equals("hybrid") && !experimentTaskName.toLowerCase().equals("wikidata")){
         		legalQuery = true;
-        		result = "some result.";
+        		result = "result.missing";
 				Query sparqlQuery = QueryFactory.create(query);
 				QueryExecution qexec = QueryExecutionFactory.sparqlService(sparqlService, sparqlQuery);
 				qexec.setTimeout(50000);
@@ -283,7 +283,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
 						while(results.hasNext()) {
 							legalQuery = true;
 							QuerySolution querySolution = results.next();
-							if(result.equals("")){
+							if(result.equalsIgnoreCase("result.missing")){
 								result = querySolution.toString();
 							}else{
 								result = result+";"+querySolution.toString();

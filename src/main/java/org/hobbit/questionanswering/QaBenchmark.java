@@ -248,7 +248,7 @@ public class QaBenchmark extends AbstractBenchmarkController {
         createDataGenerators(DATA_GENERATOR_CONTAINER_IMAGE, numberOfGenerators, envVariables);
 
         //create task generator
-        LOGGER.info("Creating Task Generator +"+TASK_GENERATOR_CONTAINER_IMAGE+".");
+        LOGGER.info("Creating Task Generator "+TASK_GENERATOR_CONTAINER_IMAGE+".");
         envVariables = new String[] {
         		QaTaskGenerator.EXPERIMENT_TYPE_PARAMETER_KEY + "=" + experimentType.getName(),
         		QaTaskGenerator.EXPERIMENT_TASK_PARAMETER_KEY + "=" + experimentTaskName,

@@ -45,11 +45,14 @@ public class QaHelper {
 	  			   			"\"onlydbo\": \""+onlydbo+"\",\n"+
 	  			   			"\"hybrid\": \""+hybrid+"\",\n"+
 	  			   			"\"question\": [\n"+
-	  			   			"{\n"+
+	  			   			"{\n";
+			if(!language.equalsIgnoreCase("en")){
+				extendedQald +=
 	  			   			"\"language\": \""+englishLanguage+"\",\n"+
 	  			   			"\"string\": \"" +englishQuestion+"\",\n"+
 	  			   			"\"keywords\": \"" +englishKeywords+"\"\n"+
-	  			   			"},\n"+
+	  			   			"},\n"; }
+			extendedQald +=
 	  			   			"{\n"+
 		  			   		"\"language\": \""+language+"\",\n"+
 		  			   		"\"string\": \"" +question+"\",\n"+
@@ -117,14 +120,11 @@ public class QaHelper {
     	return extendedQald;
     }
 	
-	public String addAnswerWikidata(String extendedQald, String queryReturn, String varType, String varValue, String datatype){
+	public String addAnswerHybrid(String extendedQald, String queryReturn, String varType, String varValue){
     	String newVarValue="";
     	
     	if(varType.equals("uri")){
     		newVarValue = getUriResult(varValue);
-    	
-		}else if(varType.equals("literal")){
-			newVarValue = getLiteralResult(varValue);
 			
 		}else { newVarValue = varValue; }
     	
@@ -135,8 +135,29 @@ public class QaHelper {
   			   			"\""+queryReturn+"\""+"\n]\n},\n"+
   			   			"\"results\": {\n"+
   			   			"\"bindings\": [\n{\n"+
+  			   			"\""+queryReturn+"\": {\n"+
+  			   			"\"type\": \""+varType+"\",\n"+
+  			   			"\"value\": \""+newVarValue+"\"\n}\n"+
+  			   			"}\n]\n}\n}\n]\n}\n";}
+    	else { extendedQald +=
+  			   			"},\n"+
+  			   			"\""+varType+"\": "+newVarValue+"\n"+
+  			   			"}\n]\n}\n";}
+    	return extendedQald;
+    }
+	
+	public String addAnswerWikidata(String extendedQald, String queryReturn, String varType, String varValue, String datatype){
+    	String newVarValue=varValue;
+    	
+    	extendedQald += "\"answers\": [\n{\n"+
+  			   			"\"head\": {\n";
+    	if(!varType.equals("boolean")) { extendedQald +=
+  			   			"\"vars\": [\n"+
+  			   			"\""+queryReturn+"\""+"\n]\n},\n"+
+  			   			"\"results\": {\n"+
+  			   			"\"bindings\": [\n{\n"+
   			   			"\""+queryReturn+"\": {\n";
-    	if(!datatype.equalsIgnoreCase("null")){ extendedQald +=
+    	if(!datatype.equalsIgnoreCase("metainfo.missing")){ extendedQald +=
     					"\"datatype\": \""+datatype+"\",\n";}
     	extendedQald += "\"type\": \""+varType+"\",\n"+
   			   			"\"value\": \""+newVarValue+"\"\n}\n"+
@@ -184,7 +205,7 @@ public class QaHelper {
 		return extendedQald;
 	}
     
-    public String addMultipleAnswersWikidata(String extendedQald, String queryReturn, String varType, String[] varValue, String datatype){
+    public String addMultipleAnswersHybrid(String extendedQald, String queryReturn, String varType, String[] varValue){
     	extendedQald += "\"answers\": [\n{\n"+
   			   			"\"head\": {\n"+
   			   			"\"vars\": [\n"+
@@ -198,28 +219,48 @@ public class QaHelper {
 			if(varType.equals("uri")){
 				newVarValue = getUriResult(varValue[r]);
 
-			}else if(varType.equals("literal")){
-				newVarValue = getLiteralResult(varValue[r]);
-
 			}else { newVarValue = varValue[r]; }
 			extendedQald = extendedQald
 						+ "{\n"
-						+ "\""+queryReturn+"\": {\n";
-			if(!datatype.equalsIgnoreCase("null")){ extendedQald +=
-						"\"datatype\": \""+datatype+"\",\n";}
-			extendedQald +=
-						"\"type\": \""+varType+"\",\n"
+						+ "\""+queryReturn+"\": {\n"
+						+ "\"type\": \""+varType+"\",\n"
 						+ "\"value\": \""+newVarValue+"\"\n}\n"
 						+ "},\n";
 		}
 		String newVarValue="";
 		if(varType.equals("uri")){
 			newVarValue = getUriResult(varValue[varValue.length-1]);
-		}else if(varType.equals("literal")){
-			newVarValue = getLiteralResult(varValue[varValue.length-1]);
 		}else { newVarValue = varValue[varValue.length-1]; }
+		extendedQald = extendedQald	+ "{\n" + "\""+queryReturn+"\": {\n" + "\"type\": \""+varType+"\",\n" + "\"value\": \""+newVarValue+"\"\n}\n" + "}\n"
+						+ "]\n}\n}\n]\n}\n";
+		return extendedQald;
+	}
+    
+    public String addMultipleAnswersWikidata(String extendedQald, String queryReturn, String varType, String[] varValue, String datatype){
+    	extendedQald += "\"answers\": [\n{\n"+
+  			   			"\"head\": {\n"+
+  			   			"\"vars\": [\n"+
+  			   			"\""+queryReturn+"\""+"\n]\n},\n"+
+  			   			"\"results\": {\n"+
+  			   			"\"bindings\": [\n";
+    	
+    	for(int r=0; r<(varValue.length)-1; r++){
+    		String newVarValue = varValue[r];
+
+			extendedQald = extendedQald
+						+ "{\n"
+						+ "\""+queryReturn+"\": {\n";
+			if(!datatype.equalsIgnoreCase("metainfo.missing")){ extendedQald +=
+						"\"datatype\": \""+datatype+"\",\n";}
+			extendedQald +=
+						"\"type\": \""+varType+"\",\n"
+						+ "\"value\": \""+newVarValue+"\"\n}\n"
+						+ "},\n";
+		}
+    	
+		String newVarValue=varValue[(varValue.length)-1];
 		extendedQald = extendedQald	+ "{\n" + "\""+queryReturn+"\": {\n";
-		if(!datatype.equalsIgnoreCase("null")){ extendedQald +=
+		if(!datatype.equalsIgnoreCase("metainfo.missing")){ extendedQald +=
 									"\"datatype\": \""+datatype+"\",\n";}
 		extendedQald = extendedQald + "\"type\": \""+varType+"\",\n" + "\"value\": \""+newVarValue+"\"\n}\n" + "}\n"
 						+ "]\n}\n}\n]\n}\n";

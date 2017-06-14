@@ -233,10 +233,10 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
         	
         	qaldFormatStringToEvaluation = qaHelper.addQuestion(qaldFormatStringToEvaluation, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
         	qaldFormatStringToEvaluation = qaHelper.addPseudoQuery(qaldFormatStringToEvaluation, queryString);
-        	if(singleAnswer){ qaldFormatStringToEvaluation = qaHelper.addAnswer(qaldFormatStringToEvaluation, answerhead, resulttype, resultString); }
+        	if(singleAnswer){ qaldFormatStringToEvaluation = qaHelper.addAnswerHybrid(qaldFormatStringToEvaluation, answerhead, resulttype, resultString); }
 			else{
 				String[] results = resultString.split(";");
-				qaldFormatStringToEvaluation = qaHelper.addMultipleAnswers(qaldFormatStringToEvaluation, answerhead, resulttype, results);
+				qaldFormatStringToEvaluation = qaHelper.addMultipleAnswersHybrid(qaldFormatStringToEvaluation, answerhead, resulttype, results);
 			}
         	qaldFormatStringToEvaluation = qaHelper.addFoot(qaldFormatStringToEvaluation);
         }
@@ -270,7 +270,7 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
         	qaldFormatStringToSystem = qaHelper.addQuestionSystem(qaldFormatStringToSystem, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
         	qaldFormatStringToSystem = qaHelper.addFoot(qaldFormatStringToSystem);
         	
-        	qaldFormatStringToEvaluation = qaHelper.addQuestionMultilingualEvaluation(qaldFormatStringToEvaluation, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords, englishLanguage, englishQuestion, englishKeywords);
+        	qaldFormatStringToEvaluation = qaHelper.addQuestion(qaldFormatStringToEvaluation, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
         	qaldFormatStringToEvaluation = qaHelper.addQuery(qaldFormatStringToEvaluation, queryString);
         	if(singleAnswer) { qaldFormatStringToEvaluation = qaHelper.addAnswerWikidata(qaldFormatStringToEvaluation, answerhead, resulttype, resultString, datatype); }
 			else{
