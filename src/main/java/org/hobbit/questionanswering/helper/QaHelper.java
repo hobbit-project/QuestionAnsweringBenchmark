@@ -9,6 +9,8 @@ import java.util.regex.Pattern;
 
 public class QaHelper {
 	
+	public static final String META_MISSING = "metainfo.missing";
+	
 	public String addHead(String extendedQald, String datasetId){
 		extendedQald += "{\n" +
   	   					"\"dataset\": {\n"+
@@ -44,10 +46,10 @@ public class QaHelper {
 	  			   			"\"aggregation\": \""+aggregation+"\",\n"+
 	  			   			"\"onlydbo\": \""+onlydbo+"\",\n"+
 	  			   			"\"hybrid\": \""+hybrid+"\",\n"+
-	  			   			"\"question\": [\n"+
-	  			   			"{\n";
+	  			   			"\"question\": [\n";	  			   			
 			if(!language.equalsIgnoreCase("en")){
 				extendedQald +=
+							"{\n"+
 	  			   			"\"language\": \""+englishLanguage+"\",\n"+
 	  			   			"\"string\": \"" +englishQuestion+"\",\n"+
 	  			   			"\"keywords\": \"" +englishKeywords+"\"\n"+
@@ -146,6 +148,27 @@ public class QaHelper {
     	return extendedQald;
     }
 	
+	public String addAnswerMultilingual(String extendedQald, String queryReturn, String varType, String varValue){
+    	String newVarValue=varValue;
+    	
+    	extendedQald += "\"answers\": [\n{\n"+
+		   			"\"head\": {\n";
+    	if(!varType.equals("boolean")) { extendedQald +=
+		   			"\"vars\": [\n"+
+		   			"\""+queryReturn+"\""+"\n]\n},\n"+
+		   			"\"results\": {\n"+
+		   			"\"bindings\": [\n{\n"+
+		   			"\""+queryReturn+"\": {\n"+
+		   			"\"type\": \""+varType+"\",\n"+
+		   			"\"value\": \""+newVarValue+"\"\n}\n"+
+		   			"}\n]\n}\n}\n]\n}\n";}
+    	else { extendedQald +=
+		   			"},\n"+
+		   			"\""+varType+"\": "+newVarValue+"\n"+
+		   			"}\n]\n}\n";}
+    	return extendedQald;
+    }
+	
 	public String addAnswerWikidata(String extendedQald, String queryReturn, String varType, String varValue, String datatype){
     	String newVarValue=varValue;
     	
@@ -157,7 +180,7 @@ public class QaHelper {
   			   			"\"results\": {\n"+
   			   			"\"bindings\": [\n{\n"+
   			   			"\""+queryReturn+"\": {\n";
-    	if(!datatype.equalsIgnoreCase("metainfo.missing")){ extendedQald +=
+    	if(!datatype.equalsIgnoreCase(META_MISSING)){ extendedQald +=
     					"\"datatype\": \""+datatype+"\",\n";}
     	extendedQald += "\"type\": \""+varType+"\",\n"+
   			   			"\"value\": \""+newVarValue+"\"\n}\n"+
@@ -236,6 +259,29 @@ public class QaHelper {
 		return extendedQald;
 	}
     
+    public String addMultipleAnswersMultilingual(String extendedQald, String queryReturn, String varType, String[] varValue){
+    	extendedQald += "\"answers\": [\n{\n"+
+  			   			"\"head\": {\n"+
+  			   			"\"vars\": [\n"+
+  			   			"\""+queryReturn+"\""+"\n]\n},\n"+
+  			   			"\"results\": {\n"+
+  			   			"\"bindings\": [\n";
+    	
+    	for(int r=0; r<(varValue.length)-1; r++){
+    		String newVarValue = varValue[r];
+			extendedQald = extendedQald
+						+ "{\n"
+						+ "\""+queryReturn+"\": {\n"
+						+ "\"type\": \""+varType+"\",\n"
+						+ "\"value\": \""+newVarValue+"\"\n}\n"
+						+ "},\n";
+		}
+		String newVarValue=varValue[varValue.length-1];
+		extendedQald = extendedQald	+ "{\n" + "\""+queryReturn+"\": {\n" + "\"type\": \""+varType+"\",\n" + "\"value\": \""+newVarValue+"\"\n}\n" + "}\n"
+						+ "]\n}\n}\n]\n}\n";
+		return extendedQald;
+	}
+    
     public String addMultipleAnswersWikidata(String extendedQald, String queryReturn, String varType, String[] varValue, String datatype){
     	extendedQald += "\"answers\": [\n{\n"+
   			   			"\"head\": {\n"+
@@ -250,7 +296,7 @@ public class QaHelper {
 			extendedQald = extendedQald
 						+ "{\n"
 						+ "\""+queryReturn+"\": {\n";
-			if(!datatype.equalsIgnoreCase("metainfo.missing")){ extendedQald +=
+			if(!datatype.equalsIgnoreCase(META_MISSING)){ extendedQald +=
 						"\"datatype\": \""+datatype+"\",\n";}
 			extendedQald +=
 						"\"type\": \""+varType+"\",\n"
@@ -260,7 +306,7 @@ public class QaHelper {
     	
 		String newVarValue=varValue[(varValue.length)-1];
 		extendedQald = extendedQald	+ "{\n" + "\""+queryReturn+"\": {\n";
-		if(!datatype.equalsIgnoreCase("metainfo.missing")){ extendedQald +=
+		if(!datatype.equalsIgnoreCase(META_MISSING)){ extendedQald +=
 									"\"datatype\": \""+datatype+"\",\n";}
 		extendedQald = extendedQald + "\"type\": \""+varType+"\",\n" + "\"value\": \""+newVarValue+"\"\n}\n" + "}\n"
 						+ "]\n}\n}\n]\n}\n";

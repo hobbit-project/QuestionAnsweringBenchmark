@@ -22,6 +22,16 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
 	public static final String NUMBER_OF_QUESTIONS_PARAMETER_KEY = "qa.number_of_questions";
 	public static final String TIME_FOR_ANSWERING_PARAMETER_KEY = "qa.time_for_answering";
 	public static final String SEED_PARAMETER_KEY = "qa.seed";
+	
+	public static final String RESULT_MISSING = "result.missing";
+	public static final String RESULTTYPE_MISSING = "resulttype.missing";
+    public static final String META_EN_MISSING = "metainfo-en.missing";
+    public static final String META_MISSING = "metainfo.missing";
+	
+	public static final String MULTILINGUAL = "multilingual";
+    public static final String HYBRID = "hybrid";
+    public static final String LARGESCALE = "largescale";
+    public static final String WIKIDATA = "wikidata";
     
 	private String experimentTypeName;
 	private String experimentTaskName;
@@ -39,7 +49,7 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
     int taskCounter;
 
     public void init() throws Exception {
-    	LOGGER.info("Initializing.");
+    	LOGGER.info("QaTaskGen: Initializing.");
     	super.init();
         Map<String, String> env = System.getenv();
 
@@ -48,13 +58,13 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
         	String value = env.get(EXPERIMENT_TYPE_PARAMETER_KEY);
             try {
             	experimentTypeName = value;
-            	LOGGER.info("Got experiment type from the environment parameters: \""+experimentTypeName+"\"");
+            	LOGGER.info("QaTaskGen: Got experiment type from the environment parameters: \""+experimentTypeName+"\"");
             } catch (Exception e) {
-                LOGGER.error("Exception while trying to parse the experiment type. Aborting.", e);
+                LOGGER.error("QaTaskGen: Exception while trying to parse the experiment type. Aborting.", e);
                 throw new Exception("Exception while trying to parse the experiment type. Aborting.", e);
             }
         } else {
-            String msg = "Couldn't get \"" + EXPERIMENT_TYPE_PARAMETER_KEY + "\" from the properties. Aborting.";
+            String msg = "QaTaskGen: Couldn't get \"" + EXPERIMENT_TYPE_PARAMETER_KEY + "\" from the properties. Aborting.";
             LOGGER.error(msg);
             throw new Exception(msg);
         }
@@ -64,25 +74,25 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
             String value = env.get(EXPERIMENT_TASK_PARAMETER_KEY);
             try {
             	experimentTaskName = value;
-            	LOGGER.info("Got experiment task from the environment parameters: \""+experimentTaskName+"\"");
+            	LOGGER.info("QaTaskGen: Got experiment task from the environment parameters: \""+experimentTaskName+"\"");
             } catch (Exception e) {
-                LOGGER.error("Exception while trying to parse the experiment task. Aborting.", e);
+                LOGGER.error("QaTaskGen: Exception while trying to parse the experiment task. Aborting.", e);
                 throw new Exception("Exception while trying to parse the experiment task. Aborting.", e);
             }
         } else {
-            String msg = "Couldn't get \"" + EXPERIMENT_TASK_PARAMETER_KEY + "\" from the properties. Aborting.";
+            String msg = "QaTaskGen: Couldn't get \"" + EXPERIMENT_TASK_PARAMETER_KEY + "\" from the properties. Aborting.";
             LOGGER.error(msg);
             throw new Exception(msg);
         }
         
         //load sample values for task type largescale
-        if(experimentTaskName.equalsIgnoreCase("largescale")){
+        if(experimentTaskName.equalsIgnoreCase(LARGESCALE)){
         	try{
-        		LOGGER.info("Loading sample values for "+experimentTaskName+".");
+        		LOGGER.info("QaTaskGen: Loading sample values for "+experimentTaskName+".");
     	    	templateSampleValues = qaHelper.getLargescaleSampleValues();
-    	    	LOGGER.info("Sample values for "+experimentTaskName+" loaded.");
+    	    	LOGGER.info("QaTaskGen: Sample values for "+experimentTaskName+" loaded.");
     		}catch(Exception e){
-    			String msg = "Exception while getting sample data.";
+    			String msg = "QaTaskGen: Exception while getting sample data.";
     			LOGGER.error(msg, e);
     			throw new Exception(msg, e);
         	}
@@ -93,13 +103,13 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
             String value = env.get(QUESTION_LANGUAGE_PARAMETER_KEY);
             try {
             	questionLanguage = value;
-            	LOGGER.info("Got language from the environment parameters: \""+questionLanguage+"\"");
+            	LOGGER.info("QaTaskGen: Got language from the environment parameters: \""+questionLanguage+"\"");
             } catch (Exception e) {
-                LOGGER.error("Exception while trying to parse the experiment language. Aborting.", e);
+                LOGGER.error("QaTaskGen: Exception while trying to parse the experiment language. Aborting.", e);
                 throw new Exception("Exception while trying to parse the experiment language. Aborting.", e);
             }
         } else {
-            String msg = "Couldn't get \"" + QUESTION_LANGUAGE_PARAMETER_KEY + "\" from the properties. Aborting.";
+            String msg = "QaTaskGen: Couldn't get \"" + QUESTION_LANGUAGE_PARAMETER_KEY + "\" from the properties. Aborting.";
             LOGGER.error(msg);
             throw new Exception(msg);
         }
@@ -108,13 +118,13 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
         if(env.containsKey(NUMBER_OF_QUESTIONS_PARAMETER_KEY)){
         	try {
                 numberOfQuestions = Integer.parseInt(env.get(NUMBER_OF_QUESTIONS_PARAMETER_KEY));
-                LOGGER.info("Got number of questions from the environment parameters: \""+numberOfQuestions+"\"");
+                LOGGER.info("QaTaskGen: Got number of questions from the environment parameters: \""+numberOfQuestions+"\"");
             } catch (NumberFormatException e) {
-            	LOGGER.error("Exception while trying to parse the number of questions. Aborting.", e);
+            	LOGGER.error("QaTaskGen: Exception while trying to parse the number of questions. Aborting.", e);
                 throw new IllegalArgumentException("Exception while trying to parse the number of questions. Aborting.", e);
             }
         }else{
-        	LOGGER.error("Couldn't get \"" + NUMBER_OF_QUESTIONS_PARAMETER_KEY + "\" from the environment. Aborting.");
+        	LOGGER.error("QaTaskGen: Couldn't get \"" + NUMBER_OF_QUESTIONS_PARAMETER_KEY + "\" from the environment. Aborting.");
             throw new IllegalArgumentException("Couldn't get \"" + NUMBER_OF_QUESTIONS_PARAMETER_KEY + "\" from the environment. Aborting.");
         }
         
@@ -122,13 +132,13 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
         if(env.containsKey(TIME_FOR_ANSWERING_PARAMETER_KEY)){
         	try {
         		timeForAnswering = Long.parseLong(env.get(TIME_FOR_ANSWERING_PARAMETER_KEY));
-                LOGGER.info("Got time for answering from the environment parameters: \""+timeForAnswering+"\"");
+                LOGGER.info("QaTaskGen: Got time for answering from the environment parameters: \""+timeForAnswering+"\"");
             } catch (NumberFormatException e) {
-            	LOGGER.error("Exception while trying to parse the time for answering. Aborting.", e);
+            	LOGGER.error("QaTaskGen: Exception while trying to parse the time for answering. Aborting.", e);
                 throw new IllegalArgumentException("Exception while trying to parse the time for answering. Aborting.", e);
             }
         }else{
-        	LOGGER.error("Couldn't get \"" + TIME_FOR_ANSWERING_PARAMETER_KEY + "\" from the environment. Aborting.");
+        	LOGGER.error("QaTaskGen: Couldn't get \"" + TIME_FOR_ANSWERING_PARAMETER_KEY + "\" from the environment. Aborting.");
             throw new IllegalArgumentException("Couldn't get \"" + TIME_FOR_ANSWERING_PARAMETER_KEY + "\" from the environment. Aborting.");
         }
         
@@ -136,32 +146,32 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
         if(env.containsKey(SEED_PARAMETER_KEY)){
         	try {
                 seed = Long.parseLong(env.get(SEED_PARAMETER_KEY));
-                LOGGER.info("Got seed from the environment parameters: \""+seed+"\"");
+                LOGGER.info("QaTaskGen: Got seed from the environment parameters: \""+seed+"\"");
             } catch (NumberFormatException e) {
-            	LOGGER.error("Exception while trying to parse the seed. Aborting.", e);
+            	LOGGER.error("QaTaskGen: Exception while trying to parse the seed. Aborting.", e);
                 throw new IllegalArgumentException("Exception while trying to parse the seed. Aborting.", e);
             }
         }else{
-        	LOGGER.error("Couldn't get \"" + SEED_PARAMETER_KEY + "\" from the environment. Aborting.");
+        	LOGGER.error("QaTaskGen: Couldn't get \"" + SEED_PARAMETER_KEY + "\" from the environment. Aborting.");
             throw new IllegalArgumentException("Couldn't get \"" + SEED_PARAMETER_KEY + "\" from the environment. Aborting.");
         }
         
         //datasetId
         datasetId = "hobbit_qa_"+this.getHobbitSessionId()+"_"+seed+"_"+experimentTaskName.toLowerCase();
-        LOGGER.info("Dataset id is "+datasetId+".");
+        LOGGER.info("QaTaskGen: Dataset id is "+datasetId+".");
         
         taskCounter = 0;
         taskDataList = new ArrayList<byte[]>();
         answerDataList = new ArrayList<byte[]>();
         
-        LOGGER.info("Initialized.");
+        LOGGER.info("QaTaskGen: Initialized.");
     }
 
     protected void generateTask(byte[] data) throws Exception {
     	String taskId = getNextTaskId();
     	
     	String englishLanguage, englishQuestion, englishKeywords;
-    	englishLanguage = englishQuestion = englishKeywords = "metainfo-en.missing";
+    	englishLanguage = englishQuestion = englishKeywords = META_EN_MISSING;
     	
     	String stringArray = RabbitMQUtils.readString(data);
 		String[] qqr = stringArray.split("\\|");
@@ -173,11 +183,11 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
 		boolean singleAnswer = true;
 		if(resultString.contains(";")) singleAnswer = false;
 		
-		String resulttype = "resulttype.missing";
+		String resulttype = RESULTTYPE_MISSING;
 		String answertype, aggregation, onlydbo, hybrid, answerhead, keywords, datatype;
-		answertype = aggregation = onlydbo = hybrid = answerhead = keywords = datatype = "metainfo.missing";
+		answertype = aggregation = onlydbo = hybrid = answerhead = keywords = datatype = META_MISSING;
 		
-		if(experimentTaskName.toLowerCase().equals("largescale")){
+		if(experimentTaskName.toLowerCase().equals(LARGESCALE)){
 			answertype = templateSampleValues.get(templateId).get(2);
 			aggregation = templateSampleValues.get(templateId).get(3);
 			onlydbo = templateSampleValues.get(templateId).get(4);
@@ -210,11 +220,11 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
             hybrid = qqr[7];
             answerhead = qqr[8];
             keywords = qqr[9];
-            if(experimentTaskName.equalsIgnoreCase("multilingual")){
+            if(experimentTaskName.equalsIgnoreCase(MULTILINGUAL)){
             	englishLanguage = "en";
             	englishQuestion = qqr[10];
             	englishKeywords = qqr[11];
-            }else if(experimentTaskName.equalsIgnoreCase("wikidata")){
+            }else if(experimentTaskName.equalsIgnoreCase(WIKIDATA)){
             	datatype = qqr[10];
             }
             if(answertype.equals("boolean")) { resulttype = "boolean"; }
@@ -227,7 +237,7 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
 		qaldFormatStringToSystem = qaHelper.addHead(qaldFormatStringToSystem, datasetId);
 		qaldFormatStringToEvaluation = qaHelper.addHead(qaldFormatStringToEvaluation, datasetId);
 		
-		if(experimentTaskName.toLowerCase().equals("hybrid")){
+		if(experimentTaskName.toLowerCase().equals(HYBRID)){
         	qaldFormatStringToSystem = qaHelper.addQuestionSystem(qaldFormatStringToSystem, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
         	qaldFormatStringToSystem = qaHelper.addFoot(qaldFormatStringToSystem);
         	
@@ -240,7 +250,7 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
 			}
         	qaldFormatStringToEvaluation = qaHelper.addFoot(qaldFormatStringToEvaluation);
         }
-        else if(experimentTaskName.toLowerCase().equals("largescale")){
+        else if(experimentTaskName.toLowerCase().equals(LARGESCALE)){
         	qaldFormatStringToSystem = qaHelper.addQuestionSystem(qaldFormatStringToSystem, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
         	qaldFormatStringToSystem = qaHelper.addFoot(qaldFormatStringToSystem);
         	
@@ -253,20 +263,20 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
 			}
 			qaldFormatStringToEvaluation = qaHelper.addFoot(qaldFormatStringToEvaluation);
         }
-        else if(experimentTaskName.toLowerCase().equals("multilingual")){
+        else if(experimentTaskName.toLowerCase().equals(MULTILINGUAL)){
         	qaldFormatStringToSystem = qaHelper.addQuestionSystem(qaldFormatStringToSystem, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
         	qaldFormatStringToSystem = qaHelper.addFoot(qaldFormatStringToSystem);
         	
         	qaldFormatStringToEvaluation = qaHelper.addQuestionMultilingualEvaluation(qaldFormatStringToEvaluation, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords, englishLanguage, englishQuestion, englishKeywords);
         	qaldFormatStringToEvaluation = qaHelper.addQuery(qaldFormatStringToEvaluation, queryString);
-        	if(singleAnswer) { qaldFormatStringToEvaluation = qaHelper.addAnswer(qaldFormatStringToEvaluation, answerhead, resulttype, resultString); }
+        	if(singleAnswer) { qaldFormatStringToEvaluation = qaHelper.addAnswerMultilingual(qaldFormatStringToEvaluation, answerhead, resulttype, resultString); }
 			else{
 				String[] results = resultString.split(";");
-				qaldFormatStringToEvaluation = qaHelper.addMultipleAnswers(qaldFormatStringToEvaluation, answerhead, resulttype, results);
+				qaldFormatStringToEvaluation = qaHelper.addMultipleAnswersMultilingual(qaldFormatStringToEvaluation, answerhead, resulttype, results);
 			}
         	qaldFormatStringToEvaluation = qaHelper.addFoot(qaldFormatStringToEvaluation);
         }
-        else if(experimentTaskName.toLowerCase().equals("wikidata")){
+        else if(experimentTaskName.toLowerCase().equals(WIKIDATA)){
         	qaldFormatStringToSystem = qaHelper.addQuestionSystem(qaldFormatStringToSystem, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
         	qaldFormatStringToSystem = qaHelper.addFoot(qaldFormatStringToSystem);
         	
@@ -292,7 +302,7 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
         if(taskCounter == numberOfQuestions){
         	int amountOfQuestions = 1;
         	if(taskDataList.size() == answerDataList.size()){
-        		LOGGER.info("Sending Task Data.");
+        		LOGGER.info("QaTaskGen: Sending Task Data.");
                 for(int i = 0; i<taskDataList.size(); i++){
                 	
                 	for(int t=0; t<amountOfQuestions; t++){
@@ -303,17 +313,17 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
                     	sendTaskToEvalStorage(internal_taskId, timestamp, answerDataList.get(internal_i));
                     	if(t==amountOfQuestions-1) i+=t;
                 	}
-                	if(experimentTaskName.toLowerCase().equals("largescale")){
+                	if(experimentTaskName.toLowerCase().equals(LARGESCALE)){
                 		amountOfQuestions++;
                 	}
-                	LOGGER.info("Set of Task Data send. Waiting "+timeForAnswering+" milliseconds.");
+                	LOGGER.info("QaTaskGen: Set of Task Data send. Waiting "+timeForAnswering+" milliseconds.");
                 	TimeUnit.MILLISECONDS.sleep(timeForAnswering);
                 }
-                LOGGER.info(numberOfQuestions+" sets of Task Data send.");
-                LOGGER.info("Sending Task Data and Answer Data finished.");
+                LOGGER.info("QaTaskGen: "+numberOfQuestions+" sets of Task Data send.");
+                LOGGER.info("QaTaskGen: Sending Task Data and Answer Data finished.");
         	}
         	else{
-        		String msg = "Generated amount of Answer Data does not fit to amount of Task Data.";
+        		String msg = "QaTaskGen: Generated amount of Answer Data does not fit to amount of Task Data.";
                 LOGGER.error(msg);
                 throw new Exception(msg);
         	}
@@ -321,8 +331,8 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
     }
 
     public void close() throws IOException {
-    	LOGGER.info("Closing.");
+    	LOGGER.info("QaTaskGen: Closing.");
         super.close();
-        LOGGER.info("Closed.");
+        LOGGER.info("QaTaskGen: Closed.");
     }
 }

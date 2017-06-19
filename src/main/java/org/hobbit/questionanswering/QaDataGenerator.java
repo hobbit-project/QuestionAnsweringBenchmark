@@ -27,6 +27,15 @@ public class QaDataGenerator extends AbstractDataGenerator {
     public static final String SEED_PARAMETER_KEY = "qa.seed";
     public static final String SPARQL_SERVICE_PARAMETER_KEY = "qa.sparql_service";
     
+    public static final String RESULT_MISSING = "result.missing";
+    public static final String META_EN_MISSING = "metainfo-en.missing";
+    public static final String META_MISSING = "metainfo.missing";
+    
+    public static final String MULTILINGUAL = "multilingual";
+    public static final String HYBRID = "hybrid";
+    public static final String LARGESCALE = "largescale";
+    public static final String WIKIDATA = "wikidata";
+    
     private String experimentTypeName;
 	private String experimentTaskName;
     private String questionLanguage;
@@ -39,7 +48,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
     private ArrayList<ArrayList<ArrayList<String>>> templates = null;
     
     public void init() throws Exception {
-    	LOGGER.info("Initializing.");
+    	LOGGER.info("QaDataGen: Initializing.");
     	super.init();
         Map<String, String> env = System.getenv();
         
@@ -48,13 +57,13 @@ public class QaDataGenerator extends AbstractDataGenerator {
         	String value = env.get(EXPERIMENT_TYPE_PARAMETER_KEY);
             try {
             	experimentTypeName = value;
-            	LOGGER.info("Got experiment type from the environment parameters: \""+experimentTypeName+"\"");
+            	LOGGER.info("QaDataGen: Got experiment type from the environment parameters: \""+experimentTypeName+"\"");
             } catch (Exception e) {
-                LOGGER.error("Exception while trying to parse the experiment type. Aborting.", e);
+                LOGGER.error("QaDataGen: Exception while trying to parse the experiment type. Aborting.", e);
                 throw new Exception("Exception while trying to parse the experiment type. Aborting.", e);
             }
         } else {
-            String msg = "Couldn't get \"" + EXPERIMENT_TYPE_PARAMETER_KEY + "\" from the properties. Aborting.";
+            String msg = "QaDataGen: Couldn't get \"" + EXPERIMENT_TYPE_PARAMETER_KEY + "\" from the properties. Aborting.";
             LOGGER.error(msg);
             throw new Exception(msg);
         }
@@ -64,40 +73,40 @@ public class QaDataGenerator extends AbstractDataGenerator {
             String value = env.get(EXPERIMENT_TASK_PARAMETER_KEY);
             try {
             	experimentTaskName = value;
-            	LOGGER.info("Got experiment task from the environment parameters: \""+experimentTaskName+"\"");
+            	LOGGER.info("QaDataGen: Got experiment task from the environment parameters: \""+experimentTaskName+"\"");
             } catch (Exception e) {
-                LOGGER.error("Exception while trying to parse the experiment task. Aborting.", e);
+                LOGGER.error("QaDataGen: Exception while trying to parse the experiment task. Aborting.", e);
                 throw new Exception("Exception while trying to parse the experiment task. Aborting.", e);
             }
         } else {
-            String msg = "Couldn't get \"" + EXPERIMENT_TASK_PARAMETER_KEY + "\" from the properties. Aborting.";
+            String msg = "QaDataGen: Couldn't get \"" + EXPERIMENT_TASK_PARAMETER_KEY + "\" from the properties. Aborting.";
             LOGGER.error(msg);
             throw new Exception(msg);
         }
         
         //load question templates for chosen task type
-        LOGGER.info("Loading question templates for "+experimentTaskName+".");
+        LOGGER.info("QaDataGen: Loading question templates for "+experimentTaskName+".");
         try{
     		templates = qaHelper.getTemplates(experimentTaskName.toLowerCase());
     	}catch(Exception e){
-    		String msg = "Exception while getting template data. Aborting.";
+    		String msg = "QaDataGen: Exception while getting template data. Aborting.";
 			LOGGER.error(msg, e);
 			throw new Exception(msg, e);
     	}
-        LOGGER.info("Question templates for "+experimentTaskName+" loaded.");
+        LOGGER.info("QaDataGen: Question templates for "+experimentTaskName+" loaded.");
         
         //load questionLanguage from environment
         if(env.containsKey(QUESTION_LANGUAGE_PARAMETER_KEY)) {
             String value = env.get(QUESTION_LANGUAGE_PARAMETER_KEY);
             try {
             	questionLanguage = value;
-            	LOGGER.info("Got language from the environment parameters: \""+questionLanguage+"\"");
+            	LOGGER.info("QaDataGen: Got language from the environment parameters: \""+questionLanguage+"\"");
             } catch (Exception e) {
-                LOGGER.error("Exception while trying to parse the experiment language. Aborting.", e);
+                LOGGER.error("QaDataGen: Exception while trying to parse the experiment language. Aborting.", e);
                 throw new Exception("Exception while trying to parse the experiment language. Aborting.", e);
             }
         } else {
-            String msg = "Couldn't get \"" + QUESTION_LANGUAGE_PARAMETER_KEY + "\" from the properties. Aborting.";
+            String msg = "QaDataGen: Couldn't get \"" + QUESTION_LANGUAGE_PARAMETER_KEY + "\" from the properties. Aborting.";
             LOGGER.error(msg);
             throw new Exception(msg);
         }
@@ -106,20 +115,20 @@ public class QaDataGenerator extends AbstractDataGenerator {
         if(env.containsKey(NUMBER_OF_QUESTIONS_PARAMETER_KEY)){
         	try {
                 numberOfQuestions = Integer.parseInt(env.get(NUMBER_OF_QUESTIONS_PARAMETER_KEY));
-                LOGGER.info("Got number of questions from the environment parameters: \""+numberOfQuestions+"\"");
+                LOGGER.info("QaDataGen: Got number of questions from the environment parameters: \""+numberOfQuestions+"\"");
             } catch (NumberFormatException e) {
-            	LOGGER.error("Exception while trying to parse the number of questions. Aborting.", e);
+            	LOGGER.error("QaDataGen: Exception while trying to parse the number of questions. Aborting.", e);
                 throw new IllegalArgumentException("Exception while trying to parse the number of questions. Aborting.", e);
             }
         }else{
-        	LOGGER.error("Couldn't get \"" + NUMBER_OF_QUESTIONS_PARAMETER_KEY + "\" from the environment. Aborting.");
+        	LOGGER.error("QaDataGen: Couldn't get \"" + NUMBER_OF_QUESTIONS_PARAMETER_KEY + "\" from the environment. Aborting.");
             throw new IllegalArgumentException("Couldn't get \"" + NUMBER_OF_QUESTIONS_PARAMETER_KEY + "\" from the environment. Aborting.");
         }
-        if(!experimentTaskName.equalsIgnoreCase("largescale")){
+        if(!experimentTaskName.equalsIgnoreCase(LARGESCALE)){
         	if(numberOfQuestions>templates.size()){
         		numberOfQuestions = templates.size();
-        		LOGGER.error("Chosen number of questions is too high.");
-        		LOGGER.info("Reducing number of questions to "+numberOfQuestions+".");
+        		LOGGER.error("QaDataGen: Chosen number of questions is too high.");
+        		LOGGER.info("QaDataGen: Reducing number of questions to "+numberOfQuestions+".");
         	}
         }
         
@@ -127,13 +136,13 @@ public class QaDataGenerator extends AbstractDataGenerator {
         if(env.containsKey(SEED_PARAMETER_KEY)){
         	try {
                 seed = Long.parseLong(env.get(SEED_PARAMETER_KEY));
-                LOGGER.info("Got seed from the environment parameters: \""+seed+"\"");
+                LOGGER.info("QaDataGen: Got seed from the environment parameters: \""+seed+"\"");
             } catch (NumberFormatException e) {
-            	LOGGER.error("Exception while trying to parse the seed. Aborting.", e);
+            	LOGGER.error("QaDataGen: Exception while trying to parse the seed. Aborting.", e);
                 throw new IllegalArgumentException("Exception while trying to parse the seed. Aborting.", e);
             }
         }else{
-        	LOGGER.error("Couldn't get \"" + SEED_PARAMETER_KEY + "\" from the environment. Aborting.");
+        	LOGGER.error("QaDataGen: Couldn't get \"" + SEED_PARAMETER_KEY + "\" from the environment. Aborting.");
             throw new IllegalArgumentException("Couldn't get \"" + SEED_PARAMETER_KEY + "\" from the environment. Aborting.");
         }
         
@@ -143,22 +152,22 @@ public class QaDataGenerator extends AbstractDataGenerator {
             String value = env.get(SPARQL_SERVICE_PARAMETER_KEY);
             try {
             	sparqlService = value;
-            	LOGGER.info("Got SPARQL service from the environment parameters: \""+sparqlService+"\"");
+            	LOGGER.info("QaDataGen: Got SPARQL service from the environment parameters: \""+sparqlService+"\"");
             } catch (Exception e) {
-                LOGGER.error("Exception while trying to parse the SPARQL service. Aborting.", e);
+                LOGGER.error("QaDataGen: Exception while trying to parse the SPARQL service. Aborting.", e);
                 throw new Exception("Exception while trying to parse the SPARQL service. Aborting.", e);
             }
         } else {
-            String msg = "Couldn't get \"" + SPARQL_SERVICE_PARAMETER_KEY + "\" from the properties. Aborting.";
+            String msg = "QaDataGen: Couldn't get \"" + SPARQL_SERVICE_PARAMETER_KEY + "\" from the properties. Aborting.";
             LOGGER.error(msg);
             throw new Exception(msg);
         }
         
-        LOGGER.info("Initialized.");
+        LOGGER.info("QaDataGen: Initialized.");
     }
 
     public void generateData() throws Exception{
-    	LOGGER.info("Generating data and sending it to the Task Generator.");
+    	LOGGER.info("QaDataGen: Generating data and sending it to the Task Generator.");
     	
     	int templatesSize = 0;
     	int pseudoRandomTemplate = 0;
@@ -177,7 +186,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
     	
     	ArrayList<String> usedQuestions = new ArrayList<String>();
     	ArrayList<Integer> usedTemplates = new ArrayList<Integer>();
-    	if(experimentTaskName.toLowerCase().equals("largescale")){
+    	if(experimentTaskName.toLowerCase().equals(LARGESCALE)){
     		usedTemplates = new ArrayList<Integer>( Arrays.asList(
     				0,4,7,10,11,14,16,17,19,21,
     				24,27,34,38,46,48,49,50,53,57,
@@ -230,7 +239,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
     		
 			//for multilingual, additionally send english
 			String englishQuestion, englishKeywords;
-			englishQuestion = englishKeywords = "metainfo-en.missing";
+			englishQuestion = englishKeywords = META_EN_MISSING;
 			
     		String questionWord = "";
     		question = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(1);
@@ -238,10 +247,10 @@ public class QaDataGenerator extends AbstractDataGenerator {
         	questionWord = question.split(" ")[0].toLowerCase();
         	query = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(2);
 			
-        	String answertype, aggregation, onlydbo, hybrid, answerhead, keywords, hybridResult, wikidataResult, wikidataDatatype;
-        	answertype = aggregation = onlydbo = hybrid = answerhead = keywords = hybridResult = wikidataResult = wikidataDatatype = "metainfo.missing";
+        	String answertype, aggregation, onlydbo, hybrid, answerhead, keywords, hybridResult, multilingualResult, wikidataResult, wikidataDatatype;
+        	answertype = aggregation = onlydbo = hybrid = answerhead = keywords = hybridResult = multilingualResult = wikidataResult = wikidataDatatype = META_MISSING;
         	
-        	if(!experimentTaskName.toLowerCase().equals("largescale")){
+        	if(!experimentTaskName.toLowerCase().equals(LARGESCALE)){
 	        	answertype = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(3);
 	            aggregation = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(4);
 	            onlydbo = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(5);
@@ -249,20 +258,24 @@ public class QaDataGenerator extends AbstractDataGenerator {
 	            answerhead = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(7);
 	            keywords = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(8);
 	            englishKeywords = keywords;
-	            if(experimentTaskName.toLowerCase().equals("hybrid")){
+	            if(experimentTaskName.toLowerCase().equals(HYBRID)){
 	            	hybridResult = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(9);
 	            	hybridResult = hybridResult.replaceAll("&result&", ";");
 	            }
-	            if(experimentTaskName.toLowerCase().equals("wikidata")){
+	            if(experimentTaskName.toLowerCase().equals(MULTILINGUAL)){
+	            	multilingualResult = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(23);
+	            	multilingualResult = multilingualResult.replaceAll("&result&", ";");
+	            }
+	            if(experimentTaskName.toLowerCase().equals(WIKIDATA)){
 	            	wikidataResult = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(9);
 	            	wikidataResult = wikidataResult.replaceAll("&result&", ";");
 	            }
         	}
     		
         	boolean legalQuery = false;
-        	if(!experimentTaskName.toLowerCase().equals("hybrid") && !experimentTaskName.toLowerCase().equals("wikidata")){
+        	if(experimentTaskName.toLowerCase().equals(LARGESCALE)){
         		legalQuery = true;
-        		result = "result.missing";
+        		result = RESULT_MISSING;
 				Query sparqlQuery = QueryFactory.create(query);
 				QueryExecution qexec = QueryExecutionFactory.sparqlService(sparqlService, sparqlQuery);
 				qexec.setTimeout(50000);
@@ -283,7 +296,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
 						while(results.hasNext()) {
 							legalQuery = true;
 							QuerySolution querySolution = results.next();
-							if(result.equalsIgnoreCase("result.missing")){
+							if(result.equalsIgnoreCase(RESULT_MISSING)){
 								result = querySolution.toString();
 							}else{
 								result = result+";"+querySolution.toString();
@@ -292,7 +305,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
 					}
 				}
 				catch(Exception e){
-					String msg = "Exception while querying SPARQL endpoint "+sparqlService+". Aborting.";
+					String msg = "QaDataGen: Exception while querying SPARQL endpoint "+sparqlService+". Aborting.";
 					LOGGER.error(msg, e);
 					throw new Exception(msg ,e);
 				}
@@ -304,10 +317,10 @@ public class QaDataGenerator extends AbstractDataGenerator {
 	        if(legalQuery){
 	        	byteArrayDataGenerator2TaskGenerator = RabbitMQUtils.writeString("");
 	        	
-	        	if(experimentTaskName.toLowerCase().equals("largescale")){
+	        	if(experimentTaskName.toLowerCase().equals(LARGESCALE)){
 	        		byteArrayDataGenerator2TaskGenerator = RabbitMQUtils.writeString(pseudoRandomTemplate + "|" + question + "|" + query + "|" + result);
 	        	}
-	        	else if(experimentTaskName.toLowerCase().equals("multilingual")){
+	        	else if(experimentTaskName.toLowerCase().equals(MULTILINGUAL)){
 	        		switch(questionLanguage){
 	        			case "fa":	question = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(9);
 									keywords = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(10);
@@ -331,15 +344,15 @@ public class QaDataGenerator extends AbstractDataGenerator {
 									keywords = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(22);
 									break;
 	        		}
-	        		byteArrayDataGenerator2TaskGenerator = RabbitMQUtils.writeString(pseudoRandomTemplate + "|" + question + "|" + query + "|" + result
+	        		byteArrayDataGenerator2TaskGenerator = RabbitMQUtils.writeString(pseudoRandomTemplate + "|" + question + "|" + query + "|" + multilingualResult
 	        				+ "|" + answertype + "|" + aggregation+ "|" + onlydbo + "|" + hybrid+ "|" + answerhead + "|" + keywords
 	        				+ "|" + englishQuestion + "|" + englishKeywords);
 	    		}
-	        	else if(experimentTaskName.toLowerCase().equals("hybrid")){
+	        	else if(experimentTaskName.toLowerCase().equals(HYBRID)){
 	        		byteArrayDataGenerator2TaskGenerator = RabbitMQUtils.writeString(pseudoRandomTemplate + "|" + question + "|" + query + "|" + hybridResult
 	        				+ "|" + answertype + "|" + aggregation+ "|" + onlydbo + "|" + hybrid+ "|" + answerhead + "|" + keywords);
 	        	}
-	        	else if(experimentTaskName.toLowerCase().equals("wikidata")){
+	        	else if(experimentTaskName.toLowerCase().equals(WIKIDATA)){
 	        		byteArrayDataGenerator2TaskGenerator = RabbitMQUtils.writeString(pseudoRandomTemplate + "|" + question + "|" + query + "|" + wikidataResult
 	        				+ "|" + answertype + "|" + aggregation+ "|" + onlydbo + "|" + hybrid+ "|" + answerhead + "|" + keywords + "|" + wikidataDatatype);
 	        	}
@@ -348,7 +361,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
  	            //TODO caching
 	        }
 	        else{
-	        	String msg = "Query is not legal for: \""+question+"\"";
+	        	String msg = "QaDataGen: Query is not legal for: \""+question+"\"";
 				LOGGER.error(msg);
 				throw new Exception(msg);
 	        }
@@ -364,12 +377,12 @@ public class QaDataGenerator extends AbstractDataGenerator {
         usedTemplates.clear();
         depletedTemplates.clear();
         
-        LOGGER.info("Data Generation finished.");
+        LOGGER.info("QaDataGen: Data Generation finished.");
 	}
 
     public void close() throws IOException {
-    	LOGGER.info("Closing.");
+    	LOGGER.info("QaDataGen: Closing.");
         super.close();
-        LOGGER.info("Closed.");
+        LOGGER.info("QaDataGen: Closed.");
     }
 }
