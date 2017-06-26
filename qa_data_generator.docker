@@ -5,6 +5,10 @@ ADD data/hybridTemplates.dat /qa/data/hybridTemplates.dat
 ADD data/largescaleTemplates.dat /qa/data/largescaleTemplates.dat
 ADD data/multilingualTemplates.dat /qa/data/multilingualTemplates.dat
 ADD data/wikidataTemplates.dat /qa/data/wikidataTemplates.dat
+ADD data/hybridtrainingTemplates.dat /qa/data/hybridtrainingTemplates.dat
+ADD data/largescaletrainingTemplates.dat /qa/data/largescaletrainingTemplates.dat
+ADD data/multilingualtrainingTemplates.dat /qa/data/multilingualtrainingTemplates.dat
+ADD data/wikidatatrainingTemplates.dat /qa/data/wikidatatrainingTemplates.dat
 
 WORKDIR /qa 
 

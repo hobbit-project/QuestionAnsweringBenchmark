@@ -22,6 +22,7 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
 	public static final String NUMBER_OF_QUESTIONS_PARAMETER_KEY = "qa.number_of_questions";
 	public static final String TIME_FOR_ANSWERING_PARAMETER_KEY = "qa.time_for_answering";
 	public static final String SEED_PARAMETER_KEY = "qa.seed";
+	public static final String DATASET_PARAMETER_KEY = "qa.dataset";
 	
 	public static final String RESULT_MISSING = "result.missing";
 	public static final String RESULTTYPE_MISSING = "resulttype.missing";
@@ -35,6 +36,7 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
     
 	private String experimentTypeName;
 	private String experimentTaskName;
+	private String experimentDataset;
     private String questionLanguage;
     private int numberOfQuestions;
     private long timeForAnswering;
@@ -48,6 +50,9 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
     ArrayList<byte[]> answerDataList = null;
     int taskCounter;
 
+    /**
+     * Initializes the Task Generator by getting all necessary environment parameters, which are set by the benchmark controller.
+     */
     public void init() throws Exception {
     	LOGGER.info("QaTaskGen: Initializing.");
     	super.init();
@@ -81,6 +86,22 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
             }
         } else {
             String msg = "QaTaskGen: Couldn't get \"" + EXPERIMENT_TASK_PARAMETER_KEY + "\" from the properties. Aborting.";
+            LOGGER.error(msg);
+            throw new Exception(msg);
+        }
+        
+        //load experimentDataset from environment
+        if(env.containsKey(DATASET_PARAMETER_KEY)) {
+            String value = env.get(DATASET_PARAMETER_KEY);
+            try {
+            	experimentDataset = value;
+            	LOGGER.info("QaTaskGen: Got dataset value from the environment parameters: \""+experimentDataset+"\"");
+            } catch (Exception e) {
+                LOGGER.error("QaTaskGen: Exception while trying to parse the dataset value. Aborting.", e);
+                throw new Exception("Exception while trying to parse the dataset value. Aborting.", e);
+            }
+        } else {
+            String msg = "QaTaskGen: Couldn't get \"" + DATASET_PARAMETER_KEY + "\" from the properties. Aborting.";
             LOGGER.error(msg);
             throw new Exception(msg);
         }
@@ -167,6 +188,11 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
         LOGGER.info("QaTaskGen: Initialized.");
     }
 
+    /**
+     * Splits the received byte-Array into needed (meta-)informations and  puts them into the QALD-JSON-FORMAT as a String.
+     * Depends on chosen task.
+     * If all data is obtained, the single tasks are sent to the system and evaluation storage with an interval of <code>timeForAnswering</code>.
+     */
     protected void generateTask(byte[] data) throws Exception {
     	String taskId = getNextTaskId();
     	
@@ -175,10 +201,11 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
     	
     	String stringArray = RabbitMQUtils.readString(data);
 		String[] qqr = stringArray.split("\\|");
+		
+		int templateId = Integer.parseInt(qqr[0]);
 		String questionString = qqr[1];
 		String queryString = qqr[2];
 		String resultString = qqr[3];
-		int templateId = Integer.parseInt(qqr[0]);
 		
 		boolean singleAnswer = true;
 		if(resultString.contains(";")) singleAnswer = false;
@@ -187,7 +214,7 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
 		String answertype, aggregation, onlydbo, hybrid, answerhead, keywords, datatype;
 		answertype = aggregation = onlydbo = hybrid = answerhead = keywords = datatype = META_MISSING;
 		
-		if(experimentTaskName.toLowerCase().equals(LARGESCALE)){
+		if(experimentTaskName.toLowerCase().equals(LARGESCALE) && experimentDataset.equalsIgnoreCase("testing")){
 			answertype = templateSampleValues.get(templateId).get(2);
 			aggregation = templateSampleValues.get(templateId).get(3);
 			onlydbo = templateSampleValues.get(templateId).get(4);
@@ -218,35 +245,57 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
             aggregation = qqr[5];
             onlydbo = qqr[6];
             hybrid = qqr[7];
-            answerhead = qqr[8];
-            keywords = qqr[9];
+            if(!answertype.equalsIgnoreCase("boolean")){
+            	answerhead = qqr[8];
+            }else{
+                answerhead = "";
+            }
+            if(experimentTaskName.equalsIgnoreCase(LARGESCALE)){
+                keywords = qqr[9];
+            }
             if(experimentTaskName.equalsIgnoreCase(MULTILINGUAL)){
+            	keywords = qqr[9];
             	englishLanguage = "en";
             	englishQuestion = qqr[10];
             	englishKeywords = qqr[11];
             }else if(experimentTaskName.equalsIgnoreCase(WIKIDATA)){
+            	keywords = qqr[9];
             	datatype = qqr[10];
             }
             if(answertype.equals("boolean")) { resulttype = "boolean"; }
 			if(answertype.equals("resource")) { resulttype = "uri"; }
 			else if(!answertype.equals("") && !resulttype.equals("boolean") ) { resulttype = "literal"; }
 		}
-		
+
 		String qaldFormatStringToSystem = "";
 		String qaldFormatStringToEvaluation="";
+		
 		qaldFormatStringToSystem = qaHelper.addHead(qaldFormatStringToSystem, datasetId);
 		qaldFormatStringToEvaluation = qaHelper.addHead(qaldFormatStringToEvaluation, datasetId);
-		
-		if(experimentTaskName.toLowerCase().equals(HYBRID)){
+
+		if(experimentTaskName.toLowerCase().equals(MULTILINGUAL)){
         	qaldFormatStringToSystem = qaHelper.addQuestionSystem(qaldFormatStringToSystem, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
         	qaldFormatStringToSystem = qaHelper.addFoot(qaldFormatStringToSystem);
         	
-        	qaldFormatStringToEvaluation = qaHelper.addQuestion(qaldFormatStringToEvaluation, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
-        	qaldFormatStringToEvaluation = qaHelper.addPseudoQuery(qaldFormatStringToEvaluation, queryString);
-        	if(singleAnswer){ qaldFormatStringToEvaluation = qaHelper.addAnswerHybrid(qaldFormatStringToEvaluation, answerhead, resulttype, resultString); }
+        	qaldFormatStringToEvaluation = qaHelper.addQuestionMultilingualEvaluation(qaldFormatStringToEvaluation, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords, englishLanguage, englishQuestion, englishKeywords);
+        	qaldFormatStringToEvaluation = qaHelper.addQuery(qaldFormatStringToEvaluation, queryString);
+        	if(singleAnswer) { qaldFormatStringToEvaluation = qaHelper.addAnswer(qaldFormatStringToEvaluation, answerhead, resulttype, resultString, datatype); }
 			else{
 				String[] results = resultString.split(";");
-				qaldFormatStringToEvaluation = qaHelper.addMultipleAnswersHybrid(qaldFormatStringToEvaluation, answerhead, resulttype, results);
+				qaldFormatStringToEvaluation = qaHelper.addMultipleAnswers(qaldFormatStringToEvaluation, answerhead, resulttype, results, datatype);
+			}
+        	qaldFormatStringToEvaluation = qaHelper.addFoot(qaldFormatStringToEvaluation);
+        }
+		else if(experimentTaskName.toLowerCase().equals(HYBRID)){
+        	qaldFormatStringToSystem = qaHelper.addQuestionHybridSystem(qaldFormatStringToSystem, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString);
+        	qaldFormatStringToSystem = qaHelper.addFoot(qaldFormatStringToSystem);
+        	
+        	qaldFormatStringToEvaluation = qaHelper.addQuestionHybridEvaluation(qaldFormatStringToEvaluation, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString);
+        	qaldFormatStringToEvaluation = qaHelper.addPseudoQuery(qaldFormatStringToEvaluation, queryString);
+        	if(singleAnswer){ qaldFormatStringToEvaluation = qaHelper.addAnswer(qaldFormatStringToEvaluation, answerhead, resulttype, resultString, datatype); }
+			else{
+				String[] results = resultString.split(";");
+				qaldFormatStringToEvaluation = qaHelper.addMultipleAnswers(qaldFormatStringToEvaluation, answerhead, resulttype, results, datatype);
 			}
         	qaldFormatStringToEvaluation = qaHelper.addFoot(qaldFormatStringToEvaluation);
         }
@@ -254,38 +303,34 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
         	qaldFormatStringToSystem = qaHelper.addQuestionSystem(qaldFormatStringToSystem, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
         	qaldFormatStringToSystem = qaHelper.addFoot(qaldFormatStringToSystem);
         	
-        	qaldFormatStringToEvaluation = qaHelper.addQuestion(qaldFormatStringToEvaluation, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
+        	qaldFormatStringToEvaluation = qaHelper.addQuestionEvaluation(qaldFormatStringToEvaluation, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
         	qaldFormatStringToEvaluation = qaHelper.addQuery(qaldFormatStringToEvaluation, queryString);
-			if(singleAnswer) { qaldFormatStringToEvaluation = qaHelper.addAnswer(qaldFormatStringToEvaluation, answerhead, resulttype, resultString); }
-			else{
-				String[] results = resultString.split(";");
-				qaldFormatStringToEvaluation = qaHelper.addMultipleAnswers(qaldFormatStringToEvaluation, answerhead, resulttype, results);
-			}
+        	if(experimentDataset.equalsIgnoreCase("testing")){
+        		if(singleAnswer) { qaldFormatStringToEvaluation = qaHelper.addAnswerModifyResult(qaldFormatStringToEvaluation, answerhead, resulttype, resultString); }
+    			else{
+    				String[] results = resultString.split(";");
+    				qaldFormatStringToEvaluation = qaHelper.addMultipleAnswersModifyResult(qaldFormatStringToEvaluation, answerhead, resulttype, results);
+    			}
+        	}else{
+        		if(singleAnswer) { qaldFormatStringToEvaluation = qaHelper.addAnswer(qaldFormatStringToEvaluation, answerhead, resulttype, resultString, datatype); }
+    			else{
+    				String[] results = resultString.split(";");
+    				qaldFormatStringToEvaluation = qaHelper.addMultipleAnswers(qaldFormatStringToEvaluation, answerhead, resulttype, results, datatype);
+    			}
+        	}
+			
 			qaldFormatStringToEvaluation = qaHelper.addFoot(qaldFormatStringToEvaluation);
-        }
-        else if(experimentTaskName.toLowerCase().equals(MULTILINGUAL)){
-        	qaldFormatStringToSystem = qaHelper.addQuestionSystem(qaldFormatStringToSystem, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
-        	qaldFormatStringToSystem = qaHelper.addFoot(qaldFormatStringToSystem);
-        	
-        	qaldFormatStringToEvaluation = qaHelper.addQuestionMultilingualEvaluation(qaldFormatStringToEvaluation, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords, englishLanguage, englishQuestion, englishKeywords);
-        	qaldFormatStringToEvaluation = qaHelper.addQuery(qaldFormatStringToEvaluation, queryString);
-        	if(singleAnswer) { qaldFormatStringToEvaluation = qaHelper.addAnswerMultilingual(qaldFormatStringToEvaluation, answerhead, resulttype, resultString); }
-			else{
-				String[] results = resultString.split(";");
-				qaldFormatStringToEvaluation = qaHelper.addMultipleAnswersMultilingual(qaldFormatStringToEvaluation, answerhead, resulttype, results);
-			}
-        	qaldFormatStringToEvaluation = qaHelper.addFoot(qaldFormatStringToEvaluation);
         }
         else if(experimentTaskName.toLowerCase().equals(WIKIDATA)){
         	qaldFormatStringToSystem = qaHelper.addQuestionSystem(qaldFormatStringToSystem, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
         	qaldFormatStringToSystem = qaHelper.addFoot(qaldFormatStringToSystem);
         	
-        	qaldFormatStringToEvaluation = qaHelper.addQuestion(qaldFormatStringToEvaluation, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
+        	qaldFormatStringToEvaluation = qaHelper.addQuestionEvaluation(qaldFormatStringToEvaluation, taskId, answertype, aggregation, onlydbo, hybrid, questionLanguage, questionString, keywords);
         	qaldFormatStringToEvaluation = qaHelper.addQuery(qaldFormatStringToEvaluation, queryString);
-        	if(singleAnswer) { qaldFormatStringToEvaluation = qaHelper.addAnswerWikidata(qaldFormatStringToEvaluation, answerhead, resulttype, resultString, datatype); }
+        	if(singleAnswer) { qaldFormatStringToEvaluation = qaHelper.addAnswer(qaldFormatStringToEvaluation, answerhead, resulttype, resultString, datatype); }
 			else{
 				String[] results = resultString.split(";");
-				qaldFormatStringToEvaluation = qaHelper.addMultipleAnswersWikidata(qaldFormatStringToEvaluation, answerhead, resulttype, results, datatype);
+				qaldFormatStringToEvaluation = qaHelper.addMultipleAnswers(qaldFormatStringToEvaluation, answerhead, resulttype, results, datatype);
 			}
         	qaldFormatStringToEvaluation = qaHelper.addFoot(qaldFormatStringToEvaluation);
         }
@@ -313,7 +358,7 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
                     	sendTaskToEvalStorage(internal_taskId, timestamp, answerDataList.get(internal_i));
                     	if(t==amountOfQuestions-1) i+=t;
                 	}
-                	if(experimentTaskName.toLowerCase().equals(LARGESCALE)){
+                	if(experimentTaskName.toLowerCase().equals(LARGESCALE) && experimentDataset.equalsIgnoreCase("testing")){
                 		amountOfQuestions++;
                 	}
                 	LOGGER.info("QaTaskGen: Set of Task Data send. Waiting "+timeForAnswering+" milliseconds.");
@@ -330,6 +375,9 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
         }
     }
 
+    /**
+     * Calls super.close() Method and logs Closing-Information.
+     */
     public void close() throws IOException {
     	LOGGER.info("QaTaskGen: Closing.");
         super.close();

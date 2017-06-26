@@ -29,6 +29,8 @@ public class QaBenchmark extends AbstractBenchmarkController {
 	protected static final Resource LARGESCALE = qaResource("largescaleTask");
 	protected static final Resource MULTILINGUAL = qaResource("multilingualTask");
 	protected static final Resource WIKIDATA = qaResource("wikidataTask");
+	protected static final Resource TESTING = qaResource("testing");
+	protected static final Resource TRAINING = qaResource("training");
 	protected static final Resource ENGLISH = qaResource("EnLanguage");
 	protected static final Resource FARSI = qaResource("FaLanguage");
 	protected static final Resource GERMAN = qaResource("DeLanguage");
@@ -41,6 +43,7 @@ public class QaBenchmark extends AbstractBenchmarkController {
 	private ExperimentType experimentType;
 	
 	private String experimentTaskName;
+	private String experimentDataset;
 	private String questionLanguage;
 	private String sparqlService;
 	
@@ -60,6 +63,9 @@ public class QaBenchmark extends AbstractBenchmarkController {
         return ResourceFactory.createResource(gerbilQaUri + local);
     }
 
+	/**
+	 * Initializes the Benchmark Controller by reading and checking all necessary information from the benchmark model.
+	 */
     @Override
     public void init() throws Exception {
     	LOGGER.info("QaBenchmark: Initializing.");
@@ -96,6 +102,31 @@ public class QaBenchmark extends AbstractBenchmarkController {
         //check experimentTaskName
         if(!experimentTaskName.equalsIgnoreCase("hybrid") && !experimentTaskName.equalsIgnoreCase("largescale") && !experimentTaskName.equalsIgnoreCase("multilingual") && !experimentTaskName.equalsIgnoreCase("wikidata")) {
         	String msg = "QaBenchmark: Couldn't get the experiment task from the parameter model. Must be \"hybrid\", \"largescale\" or \"multilingual\" or \"wikidata\". Aborting.";
+        	LOGGER.error(msg);
+        	throw new Exception(msg);
+        }
+        
+        //load Dataset from benchmark model
+        iterator = benchmarkParamModel.listObjectsOfProperty(benchmarkParamModel.getProperty(gerbilQaUri+"hasDataset"));
+        if (iterator.hasNext()) {
+            try {
+            	Resource resource = iterator.next().asResource();
+            	if (resource == null) { LOGGER.error("QaBenchmark: Got null resource."); }
+            	String uri = resource.getURI();
+            	if (TESTING.getURI().equalsIgnoreCase(uri)) {
+            		experimentDataset = "testing";
+                }
+            	if (TRAINING.getURI().equalsIgnoreCase(uri)) {
+            		experimentDataset = "training";
+                }
+                LOGGER.info("QaBenchmark: Got experiment dataset from the parameter model: \""+experimentDataset+"\"");
+            } catch (Exception e) {
+                LOGGER.error("QaBenchmark: Exception while parsing parameter.", e);
+            }
+        }
+        //check Dataset
+        if( !experimentDataset.equalsIgnoreCase("testing") && !experimentDataset.equalsIgnoreCase("training") ) {
+        	String msg = "QaBenchmark: Couldn't get the dataset value from the parameter model. Aborting.";
         	LOGGER.error(msg);
         	throw new Exception(msg);
         }
@@ -163,14 +194,14 @@ public class QaBenchmark extends AbstractBenchmarkController {
         //check numberOfQuestionSets, set numberOfQuestions
         if (numberOfQuestionSets < 0) {
         	LOGGER.error("QaBenchmark: Couldn't get the number of question sets from the parameter model. Using default value.");
-        	if(experimentTaskName.equals("largescale")){
+        	if(experimentTaskName.equals("largescale") && !experimentDataset.equalsIgnoreCase("training")){
         		numberOfQuestionSets = 30;
         	}else{
         		numberOfQuestionSets = 50;
         	}
         	LOGGER.info("QaBenchmark: Setting number of question sets to default value: \""+numberOfQuestionSets+"\"");
         }else{
-        	if(experimentTaskName.equals("largescale")){
+        	if(experimentTaskName.equals("largescale") && !experimentDataset.equalsIgnoreCase("training")){
         		numberOfQuestions = (numberOfQuestionSets*((numberOfQuestionSets+1)))/2;
         		LOGGER.info("QaBenchmark: For large-scale, chosen number of "+numberOfQuestionSets+" question sets equals to "+numberOfQuestions+" questions.");
         	}else{
@@ -245,7 +276,8 @@ public class QaBenchmark extends AbstractBenchmarkController {
         		QaDataGenerator.QUESTION_LANGUAGE_PARAMETER_KEY + "=" + questionLanguage,
         		QaDataGenerator.NUMBER_OF_QUESTIONS_PARAMETER_KEY + "=" + numberOfQuestions,
                 QaDataGenerator.SEED_PARAMETER_KEY + "=" + seed,
-                QaDataGenerator.SPARQL_SERVICE_PARAMETER_KEY + "=" + sparqlService,};
+                QaDataGenerator.SPARQL_SERVICE_PARAMETER_KEY + "=" + sparqlService,
+                QaDataGenerator.DATASET_PARAMETER_KEY + "=" + experimentDataset};
         createDataGenerators(DATA_GENERATOR_CONTAINER_IMAGE, numberOfGenerators, envVariables);
 
         //create task generator
@@ -256,7 +288,8 @@ public class QaBenchmark extends AbstractBenchmarkController {
         		QaTaskGenerator.QUESTION_LANGUAGE_PARAMETER_KEY + "=" + questionLanguage,
         		QaTaskGenerator.NUMBER_OF_QUESTIONS_PARAMETER_KEY + "=" + numberOfQuestions,
         		QaTaskGenerator.TIME_FOR_ANSWERING_PARAMETER_KEY + "=" + timeForAnswering,
-				QaTaskGenerator.SEED_PARAMETER_KEY + "=" + seed};
+				QaTaskGenerator.SEED_PARAMETER_KEY + "=" + seed,
+				QaTaskGenerator.DATASET_PARAMETER_KEY + "=" + experimentDataset};
         createTaskGenerators(TASK_GENERATOR_CONTAINER_IMAGE, numberOfGenerators, envVariables);
 
         //create evaluation storage
@@ -270,6 +303,9 @@ public class QaBenchmark extends AbstractBenchmarkController {
         LOGGER.info("QaBenchmark: Initialized.");
     }
 	
+    /**
+     * Executes the benchmark.
+     */
 	@Override
     protected void executeBenchmark() throws Exception {
 		LOGGER.info("QaBenchmark: Executing benchmark.");
@@ -297,6 +333,9 @@ public class QaBenchmark extends AbstractBenchmarkController {
         LOGGER.info("QaBenchmark: Benchmark executed.");
     }
 	
+	/**
+	 * Calls super.close() Method and logs Closing-Information.
+	 */
 	@Override
     public void close() throws IOException {
 		LOGGER.info("QaBenchmark: Closing.");
