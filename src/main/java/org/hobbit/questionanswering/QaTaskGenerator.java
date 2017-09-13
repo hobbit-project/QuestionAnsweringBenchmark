@@ -28,6 +28,7 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
 	public static final String RESULTTYPE_MISSING = "resulttype.missing";
     public static final String META_EN_MISSING = "metainfo-en.missing";
     public static final String META_MISSING = "metainfo.missing";
+    public static final String RESULT_EMPTY = "EMPTY.RESULT";
 	
 	public static final String MULTILINGUAL = "multilingual";
     public static final String HYBRID = "hybrid";
@@ -44,7 +45,7 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
     private String datasetId;
     
     private QaHelper qaHelper = new QaHelper();
-    ArrayList<ArrayList<String>> templateSampleValues = null;
+    ArrayList<ArrayList<String>> largescaleSampleValues = null;
     
     ArrayList<byte[]> taskDataList = null;
     ArrayList<byte[]> answerDataList = null;
@@ -110,7 +111,7 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
         if(experimentTaskName.equalsIgnoreCase(LARGESCALE)){
         	try{
         		LOGGER.info("QaTaskGen: Loading sample values for "+experimentTaskName+".");
-    	    	templateSampleValues = qaHelper.getLargescaleSampleValues();
+        		largescaleSampleValues = qaHelper.getLargescaleSampleValues();
     	    	LOGGER.info("QaTaskGen: Sample values for "+experimentTaskName+" loaded.");
     		}catch(Exception e){
     			String msg = "QaTaskGen: Exception while getting sample data.";
@@ -177,8 +178,8 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
             throw new IllegalArgumentException("Couldn't get \"" + SEED_PARAMETER_KEY + "\" from the environment. Aborting.");
         }
         
-        //datasetId
-        datasetId = "hobbit_qa_"+this.getHobbitSessionId()+"_"+seed+"_"+experimentTaskName.toLowerCase();
+        //datasetId (hobbit_qa_1498123456789_42_largescale_training)
+        datasetId = "hobbit_qa_"+this.getHobbitSessionId()+"_"+seed+"_"+experimentTaskName.toLowerCase()+"_"+experimentDataset.toLowerCase();
         LOGGER.info("QaTaskGen: Dataset id is "+datasetId+".");
         
         taskCounter = 0;
@@ -207,6 +208,11 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
 		String queryString = qqr[2];
 		String resultString = qqr[3];
 		
+		//for empty ResultSet --> provide an empty String (done by the QaHelper)
+		if(resultString.equalsIgnoreCase(RESULT_EMPTY)){
+			resultString=RESULT_EMPTY;
+		}
+		
 		boolean singleAnswer = true;
 		if(resultString.contains(";")) singleAnswer = false;
 		
@@ -215,19 +221,19 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
 		answertype = aggregation = onlydbo = hybrid = answerhead = keywords = datatype = META_MISSING;
 		
 		if(experimentTaskName.toLowerCase().equals(LARGESCALE) && experimentDataset.equalsIgnoreCase("testing")){
-			answertype = templateSampleValues.get(templateId).get(2);
-			aggregation = templateSampleValues.get(templateId).get(3);
-			onlydbo = templateSampleValues.get(templateId).get(4);
-			hybrid = templateSampleValues.get(templateId).get(5);
+			answertype = largescaleSampleValues.get(templateId).get(2);
+			aggregation = largescaleSampleValues.get(templateId).get(3);
+			onlydbo = largescaleSampleValues.get(templateId).get(4);
+			hybrid = largescaleSampleValues.get(templateId).get(5);
 			answerhead = "";
 			resulttype = "unknown";
-			if(!answertype.equals("boolean")) { answerhead = templateSampleValues.get(templateId).get(6); }
+			if(!answertype.equals("boolean")) { answerhead = largescaleSampleValues.get(templateId).get(6); }
 			else { resulttype = "boolean"; }
 			if(answertype.equals("resource")) { resulttype = "uri"; }
 			else if(!answertype.equals("") && !resulttype.equals("boolean") ) { resulttype = "literal"; }
-			String toBeReplacedkeywords = templateSampleValues.get(templateId).get(7);
+			String toBeReplacedkeywords = largescaleSampleValues.get(templateId).get(7);
 
-			String toBeReplacedString = templateSampleValues.get(templateId).get(0);
+			String toBeReplacedString = largescaleSampleValues.get(templateId).get(0);
 			String leftString = "";
 			String rightString = "";
 			Pattern leftSide = Pattern.compile("(.)*toBeReplacedKeyword");
@@ -356,6 +362,7 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
                 		long timestamp = System.currentTimeMillis();
                     	sendTaskToSystemAdapter(internal_taskId, taskDataList.get(internal_i));
                     	sendTaskToEvalStorage(internal_taskId, timestamp, answerDataList.get(internal_i));
+                    	//LOGGER.info("SYS\n"+RabbitMQUtils.readString(taskDataList.get(internal_i))+"\nEVL\n"+RabbitMQUtils.readString(answerDataList.get(internal_i)));
                     	if(t==amountOfQuestions-1) i+=t;
                 	}
                 	if(experimentTaskName.toLowerCase().equals(LARGESCALE) && experimentDataset.equalsIgnoreCase("testing")){

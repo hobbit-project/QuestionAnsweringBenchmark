@@ -31,6 +31,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
     public static final String RESULT_MISSING = "result.missing";
     public static final String META_EN_MISSING = "metainfo-en.missing";
     public static final String META_MISSING = "metainfo.missing";
+    public static final String RESULT_EMPTY = "EMPTY.RESULT";
     
     public static final String MULTILINGUAL = "multilingual";
     public static final String HYBRID = "hybrid";
@@ -47,7 +48,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
     private long seed;
 
     private QaHelper qaHelper = new QaHelper();
-    private ArrayList<ArrayList<ArrayList<String>>> templates = null;
+    private ArrayList<ArrayList<ArrayList<String>>> taskTemplates = null;
     
     /**
      * Initializes the Data Generator by getting all necessary environment parameters, which are set by the benchmark controller.
@@ -105,20 +106,20 @@ public class QaDataGenerator extends AbstractDataGenerator {
             throw new Exception(msg);
         }
         
-        //load question templates for chosen task type
-        LOGGER.info("QaDataGen: Loading question templates for "+experimentTaskName+"-"+experimentDataset+".");
+        //load tasks (+metainfo) for chosen task type
+        LOGGER.info("QaDataGen: Loading taskdata (+metainfo) for "+experimentTaskName+"-"+experimentDataset+".");
         try{
         	if(experimentDataset.equalsIgnoreCase("testing")){
-        		templates = qaHelper.getTemplates(experimentTaskName.toLowerCase());
+        		taskTemplates = qaHelper.getTasks(experimentTaskName.toLowerCase()+"testing");
         	}else{
-        		templates = qaHelper.getTemplates(experimentTaskName.toLowerCase()+"training");
+        		taskTemplates = qaHelper.getTasks(experimentTaskName.toLowerCase()+"training");
         	}	
     	}catch(Exception e){
-    		String msg = "QaDataGen: Exception while getting template data. Aborting.";
+    		String msg = "QaDataGen: Exception while getting taskdata (+metainfo). Aborting.";
 			LOGGER.error(msg, e);
 			throw new Exception(msg, e);
     	}
-        LOGGER.info("QaDataGen: Question templates for "+experimentTaskName+" loaded.");
+        LOGGER.info("QaDataGen: Taskdata (+metainfo) for "+experimentTaskName+" loaded.");
         
         //load questionLanguage from environment
         if(env.containsKey(QUESTION_LANGUAGE_PARAMETER_KEY)) {
@@ -150,8 +151,8 @@ public class QaDataGenerator extends AbstractDataGenerator {
             throw new IllegalArgumentException("Couldn't get \"" + NUMBER_OF_QUESTIONS_PARAMETER_KEY + "\" from the environment. Aborting.");
         }
         if(!experimentTaskName.equalsIgnoreCase(LARGESCALE)){
-        	if(numberOfQuestions>templates.size()){
-        		numberOfQuestions = templates.size();
+        	if(numberOfQuestions>taskTemplates.size()){
+        		numberOfQuestions = taskTemplates.size();
         		LOGGER.error("QaDataGen: Chosen number of questions is too high.");
         		LOGGER.info("QaDataGen: Reducing number of questions to "+numberOfQuestions+".");
         	}
@@ -210,7 +211,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
 		
 		byte[] byteArrayDataGenerator2TaskGenerator;
     	
-    	templatesSize = templates.size();
+    	templatesSize = taskTemplates.size();
 		pseudoRandomTemplate = (int) (seed%templatesSize);
     	
     	ArrayList<String> usedQuestions = new ArrayList<String>();
@@ -240,7 +241,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
 	    		}
 				usedTemplates.add(pseudoRandomTemplate);
 				
-	    		numberOfVariousQuestions = templates.get(pseudoRandomTemplate).size();
+	    		numberOfVariousQuestions = taskTemplates.get(pseudoRandomTemplate).size();
 	    		
 	    		if(seed%numberOfVariousQuestions < 0.2*numberOfVariousQuestions){
 	    			pseudoRandomQuestion = ((int) Math.round((seed)+(0.2*numberOfVariousQuestions)))%numberOfVariousQuestions;
@@ -271,11 +272,18 @@ public class QaDataGenerator extends AbstractDataGenerator {
 			englishQuestion = englishKeywords = META_EN_MISSING;
 			
     		String questionWord = "";
-    		question = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(1);
+    		question = taskTemplates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(1);
+    		question = question.replaceAll("\"", "'");
     		englishQuestion = question;
         	questionWord = question.split(" ")[0].toLowerCase();
-        	query = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(2);
+        	query = taskTemplates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(2);
+        	//prevent errors in query while reading qald-format
+        	if(!experimentTaskName.toLowerCase().equals(HYBRID)){
+        		query = query.replaceAll("\"", "'");
+        	}
 			
+        	//for all tasks, result is given (givenResult)
+        	//but for large-scale testing --> result is calculated on-the-fly (result)
         	String answertype, aggregation, onlydbo, hybrid, answerhead, keywords, givenResult, wikidataDatatype;
         	answertype = aggregation = onlydbo = hybrid = answerhead = keywords = givenResult = wikidataDatatype = META_MISSING;
         	
@@ -285,14 +293,14 @@ public class QaDataGenerator extends AbstractDataGenerator {
         		( experimentDataset.equalsIgnoreCase("testing") && !experimentTaskName.toLowerCase().equals(LARGESCALE) )){
         		gotLegalResult = true;
         		
-	        	answertype = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(3);
-	            aggregation = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(4);
-	            onlydbo = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(5);
-	            hybrid = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(6);
-	            answerhead = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(7);
-	            keywords = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(8);
+	        	answertype = taskTemplates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(3);
+	            aggregation = taskTemplates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(4);
+	            onlydbo = taskTemplates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(5);
+	            hybrid = taskTemplates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(6);
+	            answerhead = taskTemplates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(7);
+	            keywords = taskTemplates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(8);
 	            englishKeywords = keywords;
-	            givenResult = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(9);
+	            givenResult = taskTemplates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(9);
 	            givenResult = givenResult.replaceAll("&result&", ";");
 	            
         	}
@@ -311,10 +319,15 @@ public class QaDataGenerator extends AbstractDataGenerator {
 						if(boolResult == true || boolResult == false) {
 							gotLegalResult = true;
 							result = Boolean.toString(boolResult);
-						}										
+						}
 					}
 					else{
 						Iterator<QuerySolution> results = qexec.execSelect();
+						if(!results.hasNext()){
+							//for empty ResultSet --> provide an empty String (done by the QaHelper)
+							result = RESULT_EMPTY;
+							gotLegalResult = true;
+						}
 						while(results.hasNext()) {
 							gotLegalResult = true;
 							QuerySolution querySolution = results.next();
@@ -341,26 +354,26 @@ public class QaDataGenerator extends AbstractDataGenerator {
 	        	
 	        	if(experimentTaskName.toLowerCase().equals(MULTILINGUAL)){
 	        		switch(questionLanguage){
-	        			case "fa":	question = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(10);
-									keywords = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(11);
+	        			case "fa":	question = taskTemplates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(10);
+									keywords = taskTemplates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(11);
 									break;
-	        			case "de":	question = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(12);
-									keywords = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(13);
+	        			case "de":	question = taskTemplates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(12);
+									keywords = taskTemplates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(13);
 									break;
-	        			case "es":	question = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(14);
-									keywords = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(15);
+	        			case "es":	question = taskTemplates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(14);
+									keywords = taskTemplates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(15);
 									break;
-	        			case "it":	question = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(16);
-									keywords = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(17);
+	        			case "it":	question = taskTemplates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(16);
+									keywords = taskTemplates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(17);
 									break;
-	        			case "fr":	question = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(18);
-									keywords = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(19);
+	        			case "fr":	question = taskTemplates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(18);
+									keywords = taskTemplates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(19);
 									break;
-	        			case "nl":	question = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(20);
-									keywords = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(21);
+	        			case "nl":	question = taskTemplates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(20);
+									keywords = taskTemplates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(21);
 									break;
-	        			case "ro":	question = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(22);
-									keywords = templates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(23);
+	        			case "ro":	question = taskTemplates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(22);
+									keywords = taskTemplates.get(pseudoRandomTemplate).get(pseudoRandomQuestion).get(23);
 									break;
 	        		}
 	        		byteArrayDataGenerator2TaskGenerator = RabbitMQUtils.writeString(pseudoRandomTemplate + "|" + question + "|" + query + "|" + givenResult
@@ -387,8 +400,8 @@ public class QaDataGenerator extends AbstractDataGenerator {
  	            //TODO caching
 	        }
 	        else{
-	        	String msg = "QaDataGen: Didn't get legal result for: \""+question+"\"";
-				LOGGER.error(msg);
+	        	String msg = "QaDataGen: Didn't get legal result for: \""+question+"\"\nresult was "+result+"\nskipping ...";
+				LOGGER.info(msg);
 				throw new Exception(msg);
 	        }
 	        
@@ -401,7 +414,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
 	        
 	    	pseudoRandomTemplate = (pseudoRandomTemplate+pseudoRandomTemplate)%templatesSize;
 		}
-        templates.clear();
+		taskTemplates.clear();
         usedQuestions.clear();
         usedTemplates.clear();
         depletedTemplates.clear();

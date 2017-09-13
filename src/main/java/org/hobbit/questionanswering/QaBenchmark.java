@@ -192,7 +192,7 @@ public class QaBenchmark extends AbstractBenchmarkController {
             }
         }
         //check numberOfQuestionSets, set numberOfQuestions
-        if (numberOfQuestionSets < 0) {
+        if (numberOfQuestionSets <= 0) {
         	LOGGER.error("QaBenchmark: Couldn't get the number of question sets from the parameter model. Using default value.");
         	if(experimentTaskName.equals("largescale") && !experimentDataset.equalsIgnoreCase("training")){
         		numberOfQuestionSets = 30;

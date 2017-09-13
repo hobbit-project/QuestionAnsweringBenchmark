@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
 public class QaHelper {
 	
 	public static final String META_MISSING = "metainfo.missing";
+	public static final String EMPTY_RESULT = "EMPTY.RESULT";
 	
 	/**
 	 * Overwrites QALD-String. Starting with head, containing the dataset id.
@@ -231,7 +232,11 @@ public class QaHelper {
 	public String addAnswerModifyResult(String qaldString, String queryReturn, String varType, String varValue){
     	String newVarValue="";
     	
-    	if(varType.equals("uri")){
+    	if(varValue.equals(EMPTY_RESULT)){
+    		//newVarValue = varValue;
+    		newVarValue = "";
+    	}
+    	else if(varType.equals("uri")){
     		newVarValue = getUriResult(varValue);
     	
 		}else if(varType.equals("literal")){
@@ -470,12 +475,12 @@ public class QaHelper {
 	 * @throws Exception
 	 */
 	@SuppressWarnings("unchecked")
-	public ArrayList<ArrayList<ArrayList<String>>> getTemplates(String experimentTaskName) throws Exception{
+	public ArrayList<ArrayList<ArrayList<String>>> getTasks(String experimentTaskName) throws Exception{
         FileInputStream fis;
         ObjectInputStream ois = null;
         ArrayList<ArrayList<ArrayList<String>>> templates = null;
 		try {
-			String filepath = "data/"+experimentTaskName.toLowerCase()+"Templates.dat";
+			String filepath = "data/"+experimentTaskName.toLowerCase()+".dat";
 			fis = new FileInputStream(filepath);
 			ois = new ObjectInputStream(new BufferedInputStream(fis));
 			templates = (ArrayList<ArrayList<ArrayList<String>>>) ois.readObject();
@@ -497,7 +502,7 @@ public class QaHelper {
         ObjectInputStream ois = null;
         ArrayList<ArrayList<String>> largescaleSampleValues = null;
 		try {
-			fis = new FileInputStream("data/largescaleSampleValues.dat");
+			fis = new FileInputStream("data/largescalesamplevalues.dat");
 			ois = new ObjectInputStream(new BufferedInputStream(fis));
 			largescaleSampleValues = (ArrayList<ArrayList<String>>) ois.readObject();
 		}catch(Exception e){
