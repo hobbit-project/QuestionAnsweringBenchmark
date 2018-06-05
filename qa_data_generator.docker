@@ -1,14 +1,10 @@
 FROM java 
 
-ADD target/questionanswering-1.0-SNAPSHOT.jar /qa/qa.jar 
-ADD data/hybridTemplates.dat /qa/data/hybridTemplates.dat
-ADD data/largescaleTemplates.dat /qa/data/largescaleTemplates.dat
-ADD data/multilingualTemplates.dat /qa/data/multilingualTemplates.dat
-ADD data/wikidataTemplates.dat /qa/data/wikidataTemplates.dat
-ADD data/hybridtrainingTemplates.dat /qa/data/hybridtrainingTemplates.dat
-ADD data/largescaletrainingTemplates.dat /qa/data/largescaletrainingTemplates.dat
-ADD data/multilingualtrainingTemplates.dat /qa/data/multilingualtrainingTemplates.dat
-ADD data/wikidatatrainingTemplates.dat /qa/data/wikidatatrainingTemplates.dat
+ADD target/questionansweringalpha-2.1-SNAPSHOT.jar /qa/qa.jar 
+
+ADD data/largescale_test.json /qa/data/largescale_test.json
+ADD data/largescale_training.json /qa/data/largescale_training.json
+ADD data/multilang_final_data_set_50.json /qa/data/multilang_training.json
 
 WORKDIR /qa 
 

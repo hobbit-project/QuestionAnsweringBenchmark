@@ -8,20 +8,30 @@ import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.rdf.model.NodeIterator;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
 import org.hobbit.core.Commands;
 import org.hobbit.core.components.AbstractBenchmarkController;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+
+/**
+ * {@code QaBenchmark} class implementing AbstractBenchmarkController,
+ * it setup all parameters needed and control Benchmarking 
+ *
+ */
 public class QaBenchmark extends AbstractBenchmarkController {
 	
-	private static final Logger LOGGER = LoggerFactory.getLogger(QaBenchmark.class);
+	//private static final Logger LOGGER = LoggerFactory.getLogger(QaBenchmark.class);
+	private static final Logger LOGGER = LogManager.getLogger(QaBenchmark.class);
 	
-	private static final String DATA_GENERATOR_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/cmartens/qadatagenerator";
-	private static final String TASK_GENERATOR_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/cmartens/qataskgenerator";
+	//Setup images links on HOBBIT repositories.
+	private static final String DATA_GENERATOR_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/weekmo/qadatagenv3";
+	private static final String TASK_GENERATOR_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/weekmo/qataskgenv3";
 	private static  String EVALUATION_MODULE_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/conrads/qaevaluationmodule";
-	//private static  String EVALUATION_MODULE_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/cmartens/qaevaluationmodule";
 	
+	//private static  String EVALUATION_MODULE_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/cmartens/qaevaluationmodule";
 	protected static final String gerbilUri = "http://w3id.org/gerbil/vocab#";
 	protected static final String gerbilQaUri = "http://w3id.org/gerbil/qa/hobbit/vocab#";
 	protected static final Resource QA = resource("QA");
@@ -48,26 +58,44 @@ public class QaBenchmark extends AbstractBenchmarkController {
 	private String sparqlService;
 	
 	private int numberOfQuestionSets;
-	private int numberOfQuestions;
+	//private int numberOfQuestions;
 	private long timeForAnswering;
 	private long seed;
 	
-	//create single data and task generator
-	private int numberOfGenerators = 1;
+	private long startTime;
 	
+	//create single data and task generator
+	private final int NUMBER_OF_GENERATORS = 1;
+	
+	/**
+	 * Setup gerbil resource
+	 * @param local
+	 * @return Resource
+	 */
 	protected static final Resource resource(String local) {
         return ResourceFactory.createResource(gerbilUri + local);
     }
 	
+	/**
+	 * Setup QA resource
+	 * @param local
+	 * @return Resource
+	 */
 	protected static final Resource qaResource(String local) {
         return ResourceFactory.createResource(gerbilQaUri + local);
     }
 
 	/**
 	 * Initializes the Benchmark Controller by reading and checking all necessary information from the benchmark model.
+	 * Ex: parameters from web GUI
 	 */
     @Override
     public void init() throws Exception {
+    	
+    	startTime = System.currentTimeMillis();
+    	
+    	Configurator.setRootLevel(Level.ALL);
+    	
     	LOGGER.info("QaBenchmark: Initializing.");
     	super.init();
     	
@@ -75,35 +103,34 @@ public class QaBenchmark extends AbstractBenchmarkController {
     	
     	LOGGER.info("QaBenchmark: Loading parameters from benchmark model.");
         
-        //load experimentTask from benchmark model
         NodeIterator iterator = benchmarkParamModel.listObjectsOfProperty(benchmarkParamModel.getProperty(gerbilQaUri+"hasExperimentTask"));
         if (iterator.hasNext()) {
             try {
             	Resource resource = iterator.next().asResource();
-            	if (resource == null) { LOGGER.error("QaBenchmark: Got null resource."); }
-            	String uri = resource.getURI();
-            	if (HYBRID.getURI().equals(uri)) {
-                    experimentTaskName = "hybrid";
-                }
-            	if (LARGESCALE.getURI().equals(uri)) {
-                    experimentTaskName = "largescale";
-                }
-            	if (MULTILINGUAL.getURI().equals(uri)) {
-                    experimentTaskName = "multilingual";
-                }
-            	if (WIKIDATA.getURI().equals(uri)) {
-                    experimentTaskName = "wikidata";
-                }
-                LOGGER.info("QaBenchmark: Got experiment task from the parameter model: \""+experimentTaskName+"\"");
+            	if (resource == null) {
+            		throw this.localError("QaBenchmark: Got null resource.");
+            	}else {
+            		String uri = resource.getURI();
+	            	if (LARGESCALE.getURI().equals(uri)) {
+	                    experimentTaskName = "largescale";
+	                }else if (MULTILINGUAL.getURI().equals(uri)) {
+	                    experimentTaskName = "multilingual";
+	                }
+	            	/*
+	                else if (WIKIDATA.getURI().equals(uri)) {
+	                    experimentTaskName = "wikidata";
+	                }else if (HYBRID.getURI().equals(uri)) {
+	                    experimentTaskName = "hybrid";
+	                }
+	                */
+	            	else {
+	            		throw this.localError("QaBenchmark: The experiment task is not supported yet.");
+	                }
+	                LOGGER.info("QaBenchmark: Got experiment task from the parameter model: \""+experimentTaskName+"\"");
+            	}
             } catch (Exception e) {
-                LOGGER.error("QaBenchmark: Exception while parsing parameter.", e);
+                LOGGER.error("QaBenchmark: Exception while parsing parameter.\n", e);
             }
-        }
-        //check experimentTaskName
-        if(!experimentTaskName.equalsIgnoreCase("hybrid") && !experimentTaskName.equalsIgnoreCase("largescale") && !experimentTaskName.equalsIgnoreCase("multilingual") && !experimentTaskName.equalsIgnoreCase("wikidata")) {
-        	String msg = "QaBenchmark: Couldn't get the experiment task from the parameter model. Must be \"hybrid\", \"largescale\" or \"multilingual\" or \"wikidata\". Aborting.";
-        	LOGGER.error(msg);
-        	throw new Exception(msg);
         }
         
         //load Dataset from benchmark model
@@ -111,73 +138,63 @@ public class QaBenchmark extends AbstractBenchmarkController {
         if (iterator.hasNext()) {
             try {
             	Resource resource = iterator.next().asResource();
-            	if (resource == null) { LOGGER.error("QaBenchmark: Got null resource."); }
-            	String uri = resource.getURI();
-            	if (TESTING.getURI().equalsIgnoreCase(uri)) {
-            		experimentDataset = "testing";
-                }
-            	if (TRAINING.getURI().equalsIgnoreCase(uri)) {
-            		experimentDataset = "training";
-                }
-                LOGGER.info("QaBenchmark: Got experiment dataset from the parameter model: \""+experimentDataset+"\"");
+            	if (resource == null){ 
+            		throw this.localError("QaBenchmark: Got null resource.");
+            	}else {
+	            	String uri = resource.getURI();
+	            	if (TESTING.getURI().equalsIgnoreCase(uri)) {
+	            		experimentDataset = "testing";
+	                }else if (TRAINING.getURI().equalsIgnoreCase(uri)) {
+	            		experimentDataset = "training";
+	                }else {
+	                	throw this.localError("QaBenchmark: Dataset can be only testing or training");
+	                }
+	                LOGGER.info("QaBenchmark: Got experiment dataset from the parameter model: \""+experimentDataset+"\"");
+            	}
             } catch (Exception e) {
-                LOGGER.error("QaBenchmark: Exception while parsing parameter.", e);
+                LOGGER.error("QaBenchmark: Exception while parsing parameter.\n", e);
             }
         }
-        //check Dataset
-        if( !experimentDataset.equalsIgnoreCase("testing") && !experimentDataset.equalsIgnoreCase("training") ) {
-        	String msg = "QaBenchmark: Couldn't get the dataset value from the parameter model. Aborting.";
-        	LOGGER.error(msg);
-        	throw new Exception(msg);
-        }
-        
+
         //load questionLanguage from benchmark model
         questionLanguage = "";
         if (!experimentTaskName.equalsIgnoreCase("multilingual")) {
         	questionLanguage = "en";
-        	LOGGER.info("QaBenchmark: Setting question language to \"en\" due to experiment type is not \"multilingual\".");
+        	LOGGER.info("QaBenchmark: The language is sat to \"en\" due to experiment type is not \"multilingual\".");
         }else{
         	iterator = benchmarkParamModel.listObjectsOfProperty(benchmarkParamModel.getProperty(gerbilQaUri+"hasQuestionLanguage"));
         	if (iterator.hasNext()) {
                 try {
                 	Resource resource = iterator.next().asResource();
-                	if (resource == null) { LOGGER.error("QaBenchmark: Got null resource."); }
-                	String uri = resource.getURI();
-                	if (ENGLISH.getURI().equals(uri)) {
-                        questionLanguage = "en";
-                    }
-                	else if (GERMAN.getURI().equals(uri)) {
-                        questionLanguage = "de";
-                    }
-                	else if (ITALIAN.getURI().equals(uri)) {
-                        questionLanguage = "it";
-                    }
-                	else if (FRENCH.getURI().equals(uri)) {
-                        questionLanguage = "fr";
-                    }
-                	else{
-                    	questionLanguage = "en";
-                    	LOGGER.info("QaBenchmark: Chosen question language is not supported yet. Setting question language to \""+questionLanguage+"\".");
-                    }
-                    LOGGER.info("QaBenchmark: Got question language from the parameter model: \""+questionLanguage+"\"");
+                	if (resource == null) { 
+                		throw this.localError("QaBenchmark: Got null resource.");
+                	}else {
+	                	String uri = resource.getURI();
+	                	if (ENGLISH.getURI().equals(uri)) {
+	                        questionLanguage = "en";
+	                    }else if (FARSI.getURI().equals(uri)) {
+	                        questionLanguage = "fa";
+	                    }else if (GERMAN.getURI().equals(uri)) {
+	                        questionLanguage = "de";
+	                    }else if (SPANISH.getURI().equals(uri)) {
+	                        questionLanguage = "es";
+	                    }else if (ITALIAN.getURI().equals(uri)) {
+	                        questionLanguage = "it";
+	                    }else if (FRENCH.getURI().equals(uri)) {
+	                        questionLanguage = "fr";
+	                    }else if (DUTCH.getURI().equals(uri)) {
+	                        questionLanguage = "nl";
+	                    }else if (ROMANIAN.getURI().equals(uri)) {
+	                        questionLanguage = "ro";
+	                    }else{
+	                    	this.localError("QaBenchmark: Chosen question language is not supported yet");
+	                    }
+	                    LOGGER.info("QaBenchmark: Got question language from the parameter model: \""+questionLanguage+"\"");
+                	}
                 } catch (Exception e) {
-                    LOGGER.error("QaBenchmark: Exception while parsing parameter.", e);
+                    LOGGER.error("QaBenchmark: Exception while parsing parameter.\n", e);
                 }
             }
-        }
-        //check questionLanguage
-        if(!questionLanguage.equalsIgnoreCase("en") && !questionLanguage.equalsIgnoreCase("fa") && !questionLanguage.equalsIgnoreCase("de") && !questionLanguage.equalsIgnoreCase("es") 
-    			&& !questionLanguage.equalsIgnoreCase("it") && !questionLanguage.equalsIgnoreCase("fr") && !questionLanguage.equalsIgnoreCase("nl") && !questionLanguage.equalsIgnoreCase("ro")){
-    		LOGGER.error("QaBenchmark: Couldn't get the right language from the parameter model. Must be one of: \"en\", \"fa\", \"de\", \"es\", \"it\", \"fr\", \"nl\", \"ro\". Using default value.");
-    		questionLanguage = "en";
-    		LOGGER.info("QaBenchmark: Setting language to default value: \"en\"");
-    	}
-        //yet supported languages
-        if(!questionLanguage.equalsIgnoreCase("en") && !questionLanguage.equalsIgnoreCase("de")
-        		&& !questionLanguage.equalsIgnoreCase("it") && !questionLanguage.equalsIgnoreCase("fr")){
-        	LOGGER.error("QaBenchmark: Chosen language is not supported, yet.");
-    		questionLanguage = "en";
-    		LOGGER.info("QaBenchmark: Setting language to default value: \"en\"");
         }
         
         //load numberOfQuestionSets from benchmark model
@@ -188,26 +205,20 @@ public class QaBenchmark extends AbstractBenchmarkController {
         		numberOfQuestionSets = iterator.next().asLiteral().getInt();
                 LOGGER.info("QaBenchmark: Got number of question sets from the parameter model: \""+numberOfQuestionSets+"\"");
             } catch (Exception e) {
-                LOGGER.error("QaBenchmark: Exception while parsing parameter.", e);
+                LOGGER.error("QaBenchmark: Exception while parsing parameter.\n", e);
             }
         }
         //check numberOfQuestionSets, set numberOfQuestions
+        //If the number of questions set wrong.
         if (numberOfQuestionSets <= 0) {
         	LOGGER.error("QaBenchmark: Couldn't get the number of question sets from the parameter model. Using default value.");
-        	if(experimentTaskName.equals("largescale") && !experimentDataset.equalsIgnoreCase("training")){
+        	//If it is large scale and testing set it to 30 by default.
+        	if(experimentTaskName.equals("largescale") && experimentDataset.equalsIgnoreCase("testing")){
         		numberOfQuestionSets = 30;
         	}else{
         		numberOfQuestionSets = 50;
         	}
         	LOGGER.info("QaBenchmark: Setting number of question sets to default value: \""+numberOfQuestionSets+"\"");
-        }else{
-        	if(experimentTaskName.equals("largescale") && !experimentDataset.equalsIgnoreCase("training")){
-        		numberOfQuestions = (numberOfQuestionSets*((numberOfQuestionSets+1)))/2;
-        		LOGGER.info("QaBenchmark: For large-scale, chosen number of "+numberOfQuestionSets+" question sets equals to "+numberOfQuestions+" questions.");
-        	}else{
-        		numberOfQuestions = numberOfQuestionSets;
-        	}
-        	LOGGER.info("QaBenchmark: Number of questions is set to \""+numberOfQuestions+"\".");
         }
         
         //load timeForAnswering from benchmark model
@@ -221,7 +232,10 @@ public class QaBenchmark extends AbstractBenchmarkController {
                 LOGGER.error("QaBenchmark: Exception while parsing parameter.", e);
             }
         }
-        //check timeForAnswering
+        /*
+         * check timeForAnswering
+         * if the time set wrong, put the default value.
+         */
         if (timeForAnswering < 0) {
         	LOGGER.error("QaBenchmark: Couldn't get the time for answering one question set from the parameter model. Using default value.");
         	timeForAnswering = 60000;
@@ -239,7 +253,7 @@ public class QaBenchmark extends AbstractBenchmarkController {
                 LOGGER.error("QaBenchmark: Exception while parsing parameter.", e);
             }
         }
-        //check seed
+        //check if seed is wrong sat, put the default value
         if (seed < 0) {
         	LOGGER.error("QaBenchmark: Couldn't get the seed from the parameter model. Using default value.");
         	seed = 42;
@@ -263,34 +277,36 @@ public class QaBenchmark extends AbstractBenchmarkController {
 		    QueryExecution qexec = QueryExecutionFactory.sparqlService(sparqlService, query);
 		    qexec.execAsk();
         }catch(Exception e){
-        	String msg = "QaBenchmark: SPARQL service can not be accessed. Aborting.";
-        	LOGGER.error(msg, e);
-        	throw new Exception(msg, e);
+        	throw this.localError("QaBenchmark: SPARQL service not accessible. Aborting.",e);
         }
 
         //create data generator
         LOGGER.info("QaBenchmark: Creating Data Generator "+DATA_GENERATOR_CONTAINER_IMAGE+".");
+        //Setup data generator parameters
         String[] envVariables = new String[]{
         		QaDataGenerator.EXPERIMENT_TYPE_PARAMETER_KEY + "=" + experimentType.getName(),
         		QaDataGenerator.EXPERIMENT_TASK_PARAMETER_KEY + "=" + experimentTaskName,
         		QaDataGenerator.QUESTION_LANGUAGE_PARAMETER_KEY + "=" + questionLanguage,
-        		QaDataGenerator.NUMBER_OF_QUESTIONS_PARAMETER_KEY + "=" + numberOfQuestions,
+        		QaDataGenerator.NUMBER_OF_QUESTIONS_PARAMETER_KEY + "=" + numberOfQuestionSets,
                 QaDataGenerator.SEED_PARAMETER_KEY + "=" + seed,
                 QaDataGenerator.SPARQL_SERVICE_PARAMETER_KEY + "=" + sparqlService,
                 QaDataGenerator.DATASET_PARAMETER_KEY + "=" + experimentDataset};
-        createDataGenerators(DATA_GENERATOR_CONTAINER_IMAGE, numberOfGenerators, envVariables);
+        //Create data generator
+        createDataGenerators(DATA_GENERATOR_CONTAINER_IMAGE, NUMBER_OF_GENERATORS, envVariables);
 
         //create task generator
         LOGGER.info("QaBenchmark: Creating Task Generator "+TASK_GENERATOR_CONTAINER_IMAGE+".");
+        //Setup task generator parameters
         envVariables = new String[] {
         		QaTaskGenerator.EXPERIMENT_TYPE_PARAMETER_KEY + "=" + experimentType.getName(),
         		QaTaskGenerator.EXPERIMENT_TASK_PARAMETER_KEY + "=" + experimentTaskName,
         		QaTaskGenerator.QUESTION_LANGUAGE_PARAMETER_KEY + "=" + questionLanguage,
-        		QaTaskGenerator.NUMBER_OF_QUESTIONS_PARAMETER_KEY + "=" + numberOfQuestions,
+        		QaTaskGenerator.NUMBER_OF_QUESTIONS_PARAMETER_KEY + "=" + numberOfQuestionSets,
         		QaTaskGenerator.TIME_FOR_ANSWERING_PARAMETER_KEY + "=" + timeForAnswering,
 				QaTaskGenerator.SEED_PARAMETER_KEY + "=" + seed,
 				QaTaskGenerator.DATASET_PARAMETER_KEY + "=" + experimentDataset};
-        createTaskGenerators(TASK_GENERATOR_CONTAINER_IMAGE, numberOfGenerators, envVariables);
+      //create task generator
+        createTaskGenerators(TASK_GENERATOR_CONTAINER_IMAGE, NUMBER_OF_GENERATORS, envVariables);
 
         //create evaluation storage
         LOGGER.info("QaBenchmark: Creating Default Evaluation Storage "+DEFAULT_EVAL_STORAGE_IMAGE+".");
@@ -310,12 +326,16 @@ public class QaBenchmark extends AbstractBenchmarkController {
     protected void executeBenchmark() throws Exception {
 		LOGGER.info("QaBenchmark: Executing benchmark.");
 
+		//Send signals to Data generator and Task generator
         sendToCmdQueue(Commands.TASK_GENERATOR_START_SIGNAL);
         sendToCmdQueue(Commands.DATA_GENERATOR_START_SIGNAL);
 
         LOGGER.info("QaBenchmark: Waiting for Generators to finish.");
+        
+        //Wait Data generator and Task generator to finish
         waitForDataGenToFinish();
         waitForTaskGenToFinish();
+        
         LOGGER.info("QaBenchmark: Waiting for System to finish.");
         if(experimentTaskName.equalsIgnoreCase("largescale")){
         	waitForSystemToFinish(60000); //wait up to 1 more minute
@@ -324,9 +344,16 @@ public class QaBenchmark extends AbstractBenchmarkController {
         }
         
         LOGGER.info("QaBenchmark: Creating Evaluation Module "+EVALUATION_MODULE_CONTAINER_IMAGE+" and waiting for evaluation components to finish.");
-        createEvaluationModule(EVALUATION_MODULE_CONTAINER_IMAGE, new String[] { "qa.experiment_type" + "=" + experimentType.name() });
+        
+        // Create evaluation model container
+        createEvaluationModule(EVALUATION_MODULE_CONTAINER_IMAGE,
+        		new String[] { "QAexperimentType=" + experimentType.name(),
+        				"QAsparqlService="+sparqlService});
+        
+        // Wait evaluation model to finish
         waitForEvalComponentsToFinish();
         
+        // Send the results
         LOGGER.info("QaBenchmark: Sending result model.");
         sendResultModel(this.resultModel);
         
@@ -339,7 +366,22 @@ public class QaBenchmark extends AbstractBenchmarkController {
 	@Override
     public void close() throws IOException {
 		LOGGER.info("QaBenchmark: Closing.");
+		LOGGER.info("QaBenchmark: Duration -> "+(System.currentTimeMillis() - startTime));
         super.close();
         LOGGER.info("QaBenchmark: Closed.");
     }
+	
+	/**
+	 * Customized error
+	 * @param msg
+	 * @return
+	 */
+	public Exception localError(String msg) {
+		LOGGER.error(msg);
+		return new Exception(msg);
+	}
+	public Exception localError(String msg,Throwable e) {
+		LOGGER.error(msg,e);
+		return new Exception(msg,e);
+	}
 }
