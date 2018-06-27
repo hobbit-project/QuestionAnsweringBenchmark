@@ -50,6 +50,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
     private ArrayList<String> qaData;
     private QaHelper qaHelper;
     private int numberOfQuestions;
+    Map<String, String> env;
     
     /**
      * Initializes the Data Generator by getting all necessary environment parameters, which are set by the benchmark controller.
@@ -61,7 +62,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
     	LOGGER.info("QaDataGen: Initializing.");
     	super.init();
     	//Get system environment information.
-        Map<String, String> env = System.getenv();
+        env = System.getenv();
        
         /*
          * load experimentTypeName from environment
@@ -183,7 +184,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
         			qaData=qaHelper.getLargeScaleData("largescale_training.json");
         			break;
         		case MULTILINGUAL:
-        			qaData=qaHelper.getMultilingualData("multilang_training.json",questionLanguage);
+        			qaData=qaHelper.getMultilingualData("multilang_testing.json",questionLanguage);
         			break;
         		default:
         			throw this.localError("QaDataGen: Not supported Task!");
@@ -194,7 +195,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
         			qaData=qaHelper.getLargeScaleData("largescale_test.json");
         			break;
         		case MULTILINGUAL:
-        			qaData=qaHelper.getMultilingualData("multilang_training.json",questionLanguage);
+        			qaData=qaHelper.getMultilingualData("multilang_testing.json",questionLanguage);
         			break;
         		default:
         			throw this.localError("QaDataGen: Not supported Task!");

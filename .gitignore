@@ -2,6 +2,6 @@
 /data/
 .project
 .classpath
-.settings
+/.settings/
 /.git/
 .gitignore

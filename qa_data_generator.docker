@@ -1,10 +1,10 @@
 FROM java 
 
-ADD target/questionansweringalpha-2.1-SNAPSHOT.jar /qa/qa.jar 
+ADD target/questionanswering-3.0.jar /qa/qa.jar 
 
 ADD data/largescale_test.json /qa/data/largescale_test.json
 ADD data/largescale_training.json /qa/data/largescale_training.json
-ADD data/multilang_final_data_set_50.json /qa/data/multilang_training.json
+ADD data/multilingual_testing.json /qa/data/multilingual_testing.json
 
 WORKDIR /qa 
 

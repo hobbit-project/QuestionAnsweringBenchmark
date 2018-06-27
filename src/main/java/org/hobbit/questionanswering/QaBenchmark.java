@@ -29,14 +29,14 @@ public class QaBenchmark extends AbstractBenchmarkController {
 	//Setup images links on HOBBIT repositories.
 	private static final String DATA_GENERATOR_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/weekmo/qadatagenv3";
 	private static final String TASK_GENERATOR_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/weekmo/qataskgenv3";
-	private static  String EVALUATION_MODULE_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/conrads/qaevaluationmodule";
+	private static final String EVALUATION_MODULE_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/conrads/qaevaluationmodule";
 	
 	//private static  String EVALUATION_MODULE_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/cmartens/qaevaluationmodule";
 	protected static final String gerbilUri = "http://w3id.org/gerbil/vocab#";
 	protected static final String gerbilQaUri = "http://w3id.org/gerbil/qa/hobbit/vocab#";
 	protected static final Resource QA = resource("QA");
 	protected static final Resource HYBRID = qaResource("hybridTask");
-	protected static final Resource LARGESCALE = qaResource("largescaleTask");
+	protected static final Resource LARGESCALE = qaResource("largescaleTasks");
 	protected static final Resource MULTILINGUAL = qaResource("multilingualTask");
 	protected static final Resource WIKIDATA = qaResource("wikidataTask");
 	protected static final Resource TESTING = qaResource("testing");
@@ -111,6 +111,7 @@ public class QaBenchmark extends AbstractBenchmarkController {
             		throw this.localError("QaBenchmark: Got null resource.");
             	}else {
             		String uri = resource.getURI();
+            		//LOGGER.info(uri);
 	            	if (LARGESCALE.getURI().equals(uri)) {
 	                    experimentTaskName = "largescale";
 	                }else if (MULTILINGUAL.getURI().equals(uri)) {

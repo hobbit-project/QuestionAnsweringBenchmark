@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.jena.atlas.json.JSON;
-import org.apache.jena.atlas.json.JsonArray;
 import org.apache.jena.atlas.json.JsonObject;
 import org.hobbit.core.components.AbstractTaskGenerator;
 import org.hobbit.core.rabbit.RabbitMQUtils;
@@ -53,6 +52,7 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
     private ArrayList<byte[]> answerDataList;
     private int taskCounter;
     private int numberOfQuestions;
+    Map<String, String> env;
 
     /**
      * Initializes the Task Generator by getting all necessary environment parameters, which are set by the benchmark controller.
@@ -64,7 +64,7 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
     	LOGGER.info("QaTaskGen: Initializing.");
     	super.init();
     	//Get system environment information.
-    	Map<String, String> env = System.getenv();
+    	env = System.getenv();
 
         /*
          * load experimentTypeName from environment
@@ -210,30 +210,12 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
     protected void generateTask(byte[] data) throws Exception {
     	//String taskId = getNextTaskId();
     	JsonObject questionData=JSON.parse(RabbitMQUtils.readString(data));
-    	JsonObject datasetIdObject = new JsonObject();
     
-    	datasetIdObject.put("id", this.datasetId);
-    	questionData.put("dataset", datasetIdObject);
-
+    	questionData.get("dataset").getAsObject().put("id", this.datasetId);
+    	//LOGGER.info(questionData.toString());
     	answerDataList.add(RabbitMQUtils.writeString(questionData.toString()));
-    	
     	questionData.get("questions").getAsArray().get(0).getAsObject().remove("answers");
     	questionData.get("questions").getAsArray().get(0).getAsObject().remove("query");
-    	
-    	if(experimentTaskName.equalsIgnoreCase(MULTILINGUAL)) {
-    		int langIndex = getLangIndex(questionData.get("question").getAsArray(), questionLanguage);
-    		//Language
-			JsonObject selectedLange =  questionData.get("question").getAsArray().get(langIndex).getAsObject();
-			questionData.get("question").getAsArray().clear();
-			questionData.get("question").getAsArray().add(selectedLange);
-			
-			/*
-			//Query
-			JsonObject selectedQuery =  questionData.get("query").getAsArray().get(langIndex).getAsObject();
-			questionData.get("query").getAsArray().clear();
-			questionData.get("query").getAsArray().add(selectedQuery);
-			*/
-    	}
     	
 		taskDataList.add(RabbitMQUtils.writeString(questionData.toString()));
         // send data if numberOfQuestions reached
@@ -282,16 +264,6 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
     		throw this.localError("QaTaskGen: Can't send data!", e);
     	}
 	}
-    
-    private int getLangIndex(JsonArray langArray,String lang) {
-		for(int i=0;i<langArray.size();i++) {
-			if(langArray.get(i).getAsObject().get("language").toString().replace("\"", "").equalsIgnoreCase(lang)) {
-				return i;
-			}
-		}
-		return -1;
-	}
-    
 	/**
      * Calls super.close() Method and logs Closing-Information.
      */
