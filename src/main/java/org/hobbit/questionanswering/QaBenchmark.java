@@ -8,12 +8,13 @@ import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.rdf.model.NodeIterator;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.hobbit.core.Commands;
+import org.hobbit.core.components.AbstractBenchmarkController;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
-import org.hobbit.core.Commands;
-import org.hobbit.core.components.AbstractBenchmarkController;
+
 
 
 /**
@@ -93,14 +94,11 @@ public class QaBenchmark extends AbstractBenchmarkController {
     public void init() throws Exception {
     	
     	startTime = System.currentTimeMillis();
-    	
     	Configurator.setRootLevel(Level.ALL);
     	
     	LOGGER.info("QaBenchmark: Initializing.");
     	super.init();
-    	
     	experimentType = ExperimentType.QA;
-    	
     	LOGGER.info("QaBenchmark: Loading parameters from benchmark model.");
         
         NodeIterator iterator = benchmarkParamModel.listObjectsOfProperty(benchmarkParamModel.getProperty(gerbilQaUri+"hasExperimentTask"));

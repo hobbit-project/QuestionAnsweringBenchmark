@@ -2,7 +2,7 @@ FROM java
 
 ADD target/questionanswering-3.0.jar /qa/qa.jar 
 
-ADD data/largescale_test.json /qa/data/largescale_test.json
+ADD data/largescale_testing.json /qa/data/largescale_testing.json
 ADD data/largescale_training.json /qa/data/largescale_training.json
 ADD data/multilingual_testing.json /qa/data/multilingual_testing.json
 

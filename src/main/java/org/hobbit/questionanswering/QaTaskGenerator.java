@@ -9,7 +9,7 @@ import org.apache.jena.atlas.json.JSON;
 import org.apache.jena.atlas.json.JsonObject;
 import org.hobbit.core.components.AbstractTaskGenerator;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-
+import org.hobbit.qaldbuilder.QaldBuilder;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.Level;
@@ -53,6 +53,7 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
     private int taskCounter;
     private int numberOfQuestions;
     Map<String, String> env;
+    QaldBuilder qaldQuestion;
 
     /**
      * Initializes the Task Generator by getting all necessary environment parameters, which are set by the benchmark controller.
@@ -65,7 +66,7 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
     	super.init();
     	//Get system environment information.
     	env = System.getenv();
-
+    	qaldQuestion = new QaldBuilder();
         /*
          * load experimentTypeName from environment
          * Ex: QA
@@ -210,14 +211,13 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
     protected void generateTask(byte[] data) throws Exception {
     	//String taskId = getNextTaskId();
     	JsonObject questionData=JSON.parse(RabbitMQUtils.readString(data));
-    
-    	questionData.get("dataset").getAsObject().put("id", this.datasetId);
-    	//LOGGER.info(questionData.toString());
-    	answerDataList.add(RabbitMQUtils.writeString(questionData.toString()));
-    	questionData.get("questions").getAsArray().get(0).getAsObject().remove("answers");
-    	questionData.get("questions").getAsArray().get(0).getAsObject().remove("query");
+    	qaldQuestion.setAnswers(questionData);
+    	qaldQuestion.setDatasetID(this.datasetId);
+    	answerDataList.add(RabbitMQUtils.writeString(qaldQuestion.getQaldQuestion()));
+    	qaldQuestion.removeAnswers();
+    	qaldQuestion.removeQuery();
     	
-		taskDataList.add(RabbitMQUtils.writeString(questionData.toString()));
+		taskDataList.add(RabbitMQUtils.writeString(qaldQuestion.getQaldQuestion()));
         // send data if numberOfQuestions reached
         taskCounter++;
         if(taskCounter == numberOfQuestions){

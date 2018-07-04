@@ -7,6 +7,7 @@ import java.util.Random;
 import org.apache.jena.atlas.json.JSON;
 import org.apache.jena.atlas.json.JsonArray;
 import org.apache.jena.atlas.json.JsonObject;
+import org.hobbit.qaldbuilder.QaldBuilder;
 
 public class QaHelper {
 	

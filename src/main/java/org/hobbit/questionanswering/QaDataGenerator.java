@@ -184,7 +184,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
         			qaData=qaHelper.getLargeScaleData("largescale_training.json");
         			break;
         		case MULTILINGUAL:
-        			qaData=qaHelper.getMultilingualData("multilang_testing.json",questionLanguage);
+        			qaData=qaHelper.getMultilingualData("multilingual_testing.json",questionLanguage);
         			break;
         		default:
         			throw this.localError("QaDataGen: Not supported Task!");
@@ -192,10 +192,10 @@ public class QaDataGenerator extends AbstractDataGenerator {
         	}else if(experimentDataset.equalsIgnoreCase(TESTING)) {
         		switch(experimentTaskName) {
         		case LARGESCALE:
-        			qaData=qaHelper.getLargeScaleData("largescale_test.json");
+        			qaData=qaHelper.getLargeScaleData("largescale_testing.json");
         			break;
         		case MULTILINGUAL:
-        			qaData=qaHelper.getMultilingualData("multilang_testing.json",questionLanguage);
+        			qaData=qaHelper.getMultilingualData("multilingual_testing.json",questionLanguage);
         			break;
         		default:
         			throw this.localError("QaDataGen: Not supported Task!");
@@ -206,7 +206,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
     	}catch(Exception e){
     		throw this.localError("QaDataGen: Exception while getting data (+metainfo). Aborting.", e);
     	}
-        LOGGER.info("QaDataGen: The data is (+metainfo) for "+experimentTaskName+" loaded.");
+        LOGGER.info("QaDataGen: "+experimentTaskName+" data is loaded.");
         
         
         
