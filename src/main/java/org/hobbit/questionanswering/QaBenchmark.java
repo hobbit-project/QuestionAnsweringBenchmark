@@ -28,8 +28,8 @@ public class QaBenchmark extends AbstractBenchmarkController {
 	private static final Logger LOGGER = LogManager.getLogger(QaBenchmark.class);
 	
 	//Setup images links on HOBBIT repositories.
-	private static final String DATA_GENERATOR_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/weekmo/qadatagenv3";
-	private static final String TASK_GENERATOR_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/weekmo/qataskgenv3";
+	private static final String DATA_GENERATOR_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/weekmo/qadatagenv3a";
+	private static final String TASK_GENERATOR_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/weekmo/qataskgenv3a";
 	private static final String EVALUATION_MODULE_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/conrads/qaevaluationmodule";
 	
 	//private static  String EVALUATION_MODULE_CONTAINER_IMAGE = "git.project-hobbit.eu:4567/cmartens/qaevaluationmodule";
@@ -37,7 +37,7 @@ public class QaBenchmark extends AbstractBenchmarkController {
 	protected static final String gerbilQaUri = "http://w3id.org/gerbil/qa/hobbit/vocab#";
 	protected static final Resource QA = resource("QA");
 	protected static final Resource HYBRID = qaResource("hybridTask");
-	protected static final Resource LARGESCALE = qaResource("largescaleTasks");
+	protected static final Resource LARGESCALE = qaResource("largescaleTask");
 	protected static final Resource MULTILINGUAL = qaResource("multilingualTask");
 	protected static final Resource WIKIDATA = qaResource("wikidataTask");
 	protected static final Resource TESTING = qaResource("testing");

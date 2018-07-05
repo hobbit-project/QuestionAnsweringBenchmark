@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.jena.atlas.json.JSON;
-import org.apache.jena.atlas.json.JsonObject;
 import org.hobbit.core.components.AbstractTaskGenerator;
 import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.qaldbuilder.QaldBuilder;
@@ -66,7 +64,7 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
     	super.init();
     	//Get system environment information.
     	env = System.getenv();
-    	qaldQuestion = new QaldBuilder();
+    	//qaldQuestion = new QaldBuilder();
         /*
          * load experimentTypeName from environment
          * Ex: QA
@@ -210,13 +208,15 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
      */
     protected void generateTask(byte[] data) throws Exception {
     	//String taskId = getNextTaskId();
-    	JsonObject questionData=JSON.parse(RabbitMQUtils.readString(data));
-    	qaldQuestion.setAnswers(questionData);
+    	String questionData=RabbitMQUtils.readString(data);
+    	LOGGER.info(questionData);
+    	qaldQuestion = new QaldBuilder(questionData);
     	qaldQuestion.setDatasetID(this.datasetId);
     	answerDataList.add(RabbitMQUtils.writeString(qaldQuestion.getQaldQuestion()));
+    	LOGGER.info("With answers:\n"+qaldQuestion.getQaldQuestion());
     	qaldQuestion.removeAnswers();
     	qaldQuestion.removeQuery();
-    	
+    	LOGGER.info("Without answers:\n"+qaldQuestion.getQaldQuestion());
 		taskDataList.add(RabbitMQUtils.writeString(qaldQuestion.getQaldQuestion()));
         // send data if numberOfQuestions reached
         taskCounter++;
