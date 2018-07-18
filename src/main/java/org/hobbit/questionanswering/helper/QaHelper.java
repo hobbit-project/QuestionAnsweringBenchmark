@@ -51,15 +51,17 @@ public class QaHelper {
 		this.setLanguages(questionsArray.get(0).getAsObject().get("question").getAsArray());
 		int langID=this.languages.get(lang);
 		JsonObject randomlySelected;
-		int randNum=-1,datasetSize=questionsArray.size();
+		int randNum=-1,datasetSize=questionsArray.size(),id=-1;
 		String query="",question="";
 		while(data.size()<this.numOfQuestions) {
 			randNum=rand.nextInt(datasetSize);
 			if(!used.contains(randNum)) {
 				qald = new QaldBuilder();
 				randomlySelected=questionsArray.get(randNum).getAsObject();
-				question = randomlySelected.get("question").getAsArray().get(langID).getAsObject().get("string").toString().trim().replace("\"", "");
-				query = randomlySelected.get("query").getAsArray().get(langID).getAsObject().get("sparql").toString();
+				question = randomlySelected.get("question").getAsArray().get(langID).getAsObject().get("string").toString().replace("\"", "").trim();
+				query = randomlySelected.get("query").getAsArray().get(langID).getAsObject().get("sparql").toString().replace("\"", "").trim();
+				id= Integer.parseInt(randomlySelected.get("id").toString().replace("\"", "").trim());
+				qald.setID(id);
 				qald.setAnswers(randomlySelected);
 				qald.setQuestionString(question, lang);
 				qald.setQuery(query);
