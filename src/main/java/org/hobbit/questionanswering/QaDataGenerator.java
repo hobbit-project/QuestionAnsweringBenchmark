@@ -13,8 +13,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 
 /**
- * {@code QaDataGenerator} class is implementation of AbstractDataGenerator,
- * It generate questions and answers and send them to {@code QaTaskGenerator}.
+ * A class is inherits {@code AbstractDataGenerator} class to generate questions and answers and send them to {@code QaTaskGenerator}.
  * 
  */
 public class QaDataGenerator extends AbstractDataGenerator {

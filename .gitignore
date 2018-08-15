@@ -1,7 +1,6 @@
-/target/
-/data/
-.project
+.git/
+.settings/
+data/
+target/
 .classpath
-/.settings/
-/.git/
-.gitignore
+.project

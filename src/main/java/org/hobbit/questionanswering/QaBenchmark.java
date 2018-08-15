@@ -18,9 +18,9 @@ import org.apache.logging.log4j.LogManager;
 
 
 /**
- * {@code QaBenchmark} class implementing AbstractBenchmarkController,
- * it setup all parameters needed and control Benchmarking 
- *
+ * A class inherits AbstractBenchmarkController to control benchmarking system
+ * @author Mohammed Abdelgadir 
+ * @version 3.0.5
  */
 public class QaBenchmark extends AbstractBenchmarkController {
 	
@@ -50,6 +50,11 @@ public class QaBenchmark extends AbstractBenchmarkController {
 	protected static final Resource FRENCH = qaResource("FrLanguage");
 	protected static final Resource DUTCH = qaResource("NlLanguage");
 	protected static final Resource ROMANIAN = qaResource("RoLanguage");
+	
+	private final String _LARGESCALE="largescale";
+	private final String _MULTILINGUAL="multilingual";
+	//private final String _WIKIDATA="wikidata";
+	//private final String _HYBRID="hybrid";
 	
 	private ExperimentType experimentType;
 	
@@ -93,14 +98,17 @@ public class QaBenchmark extends AbstractBenchmarkController {
     @Override
     public void init() throws Exception {
     	
-    	startTime = System.currentTimeMillis();
-    	Configurator.setRootLevel(Level.ALL);
+    	startTime = System.currentTimeMillis(); // a variable to carry starting time
+    	Configurator.setRootLevel(Level.ALL); // setup logger
     	
     	LOGGER.info("QaBenchmark: Initializing.");
-    	super.init();
-    	experimentType = ExperimentType.QA;
+    	super.init(); // call intialisation function in super class
+    	experimentType = ExperimentType.QA; // set experiment type to Question Answering
     	LOGGER.info("QaBenchmark: Loading parameters from benchmark model.");
         
+    	/*
+    	 * Set task type (largescale, multilingual, wikidata, hybrid)
+    	 */
         NodeIterator iterator = benchmarkParamModel.listObjectsOfProperty(benchmarkParamModel.getProperty(gerbilQaUri+"hasExperimentTask"));
         if (iterator.hasNext()) {
             try {
@@ -111,9 +119,9 @@ public class QaBenchmark extends AbstractBenchmarkController {
             		String uri = resource.getURI();
             		//LOGGER.info(uri);
 	            	if (LARGESCALE.getURI().equals(uri)) {
-	                    experimentTaskName = "largescale";
+	                    experimentTaskName = _LARGESCALE;
 	                }else if (MULTILINGUAL.getURI().equals(uri)) {
-	                    experimentTaskName = "multilingual";
+	                    experimentTaskName = _MULTILINGUAL;
 	                }
 	            	/*
 	                else if (WIKIDATA.getURI().equals(uri)) {

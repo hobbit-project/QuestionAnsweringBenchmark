@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.hobbit.core.components.AbstractTaskGenerator;
 import org.hobbit.core.rabbit.RabbitMQUtils;
-import org.hobbit.qaldbuilder.QaldBuilder;
+import org.hobbit.QaldBuilder;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.Level;
@@ -58,12 +58,12 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
      */
     public void init() throws Exception {
     	
-    	Configurator.setRootLevel(Level.ALL);
+    	Configurator.setRootLevel(Level.ALL); // configure logger
     	
     	LOGGER.info("QaTaskGen: Initializing.");
-    	super.init();
-    	//Get system environment information.
-    	env = System.getenv();
+    	super.init(); // call initialisation function on super class
+    	
+    	env = System.getenv(); //Get system environment information.
     	//qaldQuestion = new QaldBuilder();
         /*
          * load experimentTypeName from environment
