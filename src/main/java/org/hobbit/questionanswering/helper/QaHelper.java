@@ -1,13 +1,13 @@
 package org.hobbit.questionanswering.helper;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 
 import org.apache.jena.atlas.json.JSON;
 import org.apache.jena.atlas.json.JsonArray;
-import org.apache.jena.atlas.json.JsonObject;
-
+import org.apache.jena.atlas.json.JsonValue;
 import org.hobbit.QaldBuilder;
 
 /**
@@ -17,14 +17,12 @@ import org.hobbit.QaldBuilder;
  */
 public class QaHelper {
 	
-	private Random rand;
-	private ArrayList<Integer> used;
-	private ArrayList<String> data;
+	private List<JsonValue> data;
 	QaldBuilder qald;
-	HashMap<String, Integer> languages;
-	
-	private int numOfQuestions=0;
-	private String sparqlService="http://dbpedia.org/sparql";
+	private long seed;
+	private int numOfQuestions;
+	public static String SPARQL_SERVICE="http://dbpedia.org/sparql";
+	private int langId;
 	
 	/**
 	 * The class constructor 
@@ -32,14 +30,10 @@ public class QaHelper {
 	 * @param numOfQuestions : number of questions to retrieve
 	 * @param sparqlService : a url for sparql service
 	 */
-	public QaHelper(long seed,int numOfQuestions,String sparqlService) {
+	public QaHelper(long seed,int numOfQuestions) {
 		this.numOfQuestions=numOfQuestions;
-		this.sparqlService = sparqlService;
-		
-		this.languages=new HashMap<String, Integer>();
-		this.data=new ArrayList<String>();
-		this.used=new ArrayList<Integer>();
-		this.rand=new Random(seed);
+		this.data=new ArrayList<JsonValue>();
+		this.seed = seed;
 	}
 	
 	/**
@@ -48,20 +42,33 @@ public class QaHelper {
 	 * @return A list of Qald formated questions
 	 * @throws Exception
 	 */
-	public  ArrayList<String> getLargeScaleData(String fileName) throws Exception {
-		JsonArray questionsArray=JSON.readAny("data/"+fileName).getAsArray();
-		int randNum=-1,datasetSize=questionsArray.size();
-		while(data.size()<this.numOfQuestions) {
-			randNum=rand.nextInt(datasetSize);
-			if(!used.contains(randNum)) {
-				qald = new QaldBuilder();
-				qald.setQuestionAsJson(questionsArray.get(randNum).getAsObject().toString());
-				qald.setAnswers(sparqlService);
-				data.add(qald.getQaldQuestion());
-				used.add(randNum);
+	public List<JsonValue> getLargeScaleData(String fileName) throws Exception {
+		JsonArray questionsArray=JSON.readAny(fileName).getAsArray();
+		
+		if(this.numOfQuestions>questionsArray.size())
+			throw new Exception("Number of Quesrtions is bigger than the data set size!");
+		
+		Collections.shuffle(questionsArray, new Random(seed));
+		
+		return questionsArray.subList(0, numOfQuestions);
+	}
+	
+	public List<JsonValue> getLargeScaleData(String fileName, int triple) throws Exception {
+		
+		JsonArray questionsArray=JSON.readAny(fileName).getAsArray();
+		
+		for(JsonValue obj:questionsArray) {
+			qald = new QaldBuilder();
+			qald.setQuestionAsJson(obj.toString());
+			if(qald.getTriple()==triple) {
+				this.data.add(obj);
 			}
 		}
-		return this.data;
+		if(this.data.size()<numOfQuestions)
+			throw new Exception("There is no enough questions has this triple!");
+					
+		Collections.shuffle(this.data, new Random(seed));
+		return this.data.subList(0, numOfQuestions);
 	}
 	
 	/**
@@ -71,30 +78,21 @@ public class QaHelper {
 	 * @return A list of Qald formated questions
 	 * @throws Exception
 	 */
-	public ArrayList<String> getMultilingualData(String fileName,String lang) throws Exception {
-		JsonArray questionsArray=JSON.readAny("data/"+fileName).getAsArray();
-		this.setLanguages(questionsArray.get(0).getAsObject().get("question").getAsArray());
-		int langID=this.languages.get(lang);
-		JsonObject randomlySelected;
-		int randNum=-1,datasetSize=questionsArray.size(),id=-1;
-		String query="",question="";
-		while(data.size()<this.numOfQuestions) {
-			randNum=rand.nextInt(datasetSize);
-			if(!used.contains(randNum)) {
-				qald = new QaldBuilder();
-				randomlySelected=questionsArray.get(randNum).getAsObject();
-				question = randomlySelected.get("question").getAsArray().get(langID).getAsObject().get("string").toString().replace("\"", "").trim();
-				query = randomlySelected.get("query").getAsArray().get(langID).getAsObject().get("sparql").toString().replace("\"", "").trim();
-				id= Integer.parseInt(randomlySelected.get("id").toString().replace("\"", "").trim());
-				qald.setID(id);
-				qald.setAnswers(randomlySelected);
-				qald.setQuestionString(question, lang);
-				qald.setQuery(query);
-				qald.setAnswers(sparqlService);
-		
-				data.add(qald.getQaldQuestion());
-				used.add(randNum);
-			}
+	public List<JsonValue> getMultilingualData(String fileName,String lang) throws Exception {
+		List<JsonValue> questionsArray=JSON.readAny(fileName).getAsArray();
+		if(this.numOfQuestions>questionsArray.size())
+			throw new Exception("Number of Quesrtions is bigger than the data set size!");
+		Collections.shuffle(questionsArray, new Random(seed));
+		questionsArray =  questionsArray.subList(0, numOfQuestions);
+		this.setLanguages(questionsArray.get(0).getAsObject().get("question").getAsArray(),lang);
+		for(JsonValue quest:questionsArray) {
+			qald = new QaldBuilder();
+			qald.setID(Integer.parseInt(quest.getAsObject().get("id").toString()));
+			qald.setOnlydbo(Boolean.parseBoolean(quest.getAsObject().get("onlydbo").toString()));
+			qald.setQuery(quest.getAsObject().get("query").getAsArray().get(this.langId).getAsObject().get("sparql").toString());
+			qald.setQuestionString(quest.getAsObject().get("question").getAsArray().get(this.langId).getAsObject().get("string").toString(),
+					quest.getAsObject().get("question").getAsArray().get(this.langId).getAsObject().get("language").toString());
+			this.data.add(qald.getQaldQuestion());
 		}
 		return this.data;
 	}
@@ -102,11 +100,14 @@ public class QaHelper {
 	/*
 	 * Auxiliary function used by getMultilingualData function
 	 */
-	private void setLanguages(JsonArray languages) {
-		String lang ="";
+	private void setLanguages(JsonArray languages,String lang) {
+		String localLange = "";
 		for(int i =0;i<languages.size();i++) {
-			lang = languages.get(i).getAsObject().get("language").toString().trim().replace("\"", "");
-			this.languages.put(lang, i);
+			localLange = languages.get(i).getAsObject().get("language").toString().trim().replace("\"", "");
+			if(lang.equalsIgnoreCase(localLange)) {
+				this.langId = i;
+				break;
+			}
 		}
     }
 }

@@ -4,3 +4,4 @@ data/
 target/
 .classpath
 .project
+benchmark.ttl

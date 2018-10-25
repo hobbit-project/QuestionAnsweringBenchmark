@@ -210,12 +210,12 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
     	//String taskId = getNextTaskId();
     	qaldQuestion = new QaldBuilder(RabbitMQUtils.readString(data));
     	qaldQuestion.setDatasetID(this.datasetId);
-    	answerDataList.add(RabbitMQUtils.writeString(qaldQuestion.getQaldQuestion()));
+    	answerDataList.add(RabbitMQUtils.writeString(qaldQuestion.getQaldQuestion().toString()));
     	//LOGGER.info("With answers:\n"+qaldQuestion.getQaldQuestion());
     	qaldQuestion.removeAnswers();
     	qaldQuestion.removeQuery();
     	//LOGGER.info("Without answers:\n"+qaldQuestion.getQaldQuestion());
-		taskDataList.add(RabbitMQUtils.writeString(qaldQuestion.getQaldQuestion()));
+		taskDataList.add(RabbitMQUtils.writeString(qaldQuestion.getQaldQuestion().toString()));
         // send data if numberOfQuestions reached
         taskCounter++;
         if(taskCounter == numberOfQuestions){

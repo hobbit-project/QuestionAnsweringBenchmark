@@ -5,6 +5,7 @@ ADD target/questionanswering-3.0.jar /qa/qa.jar
 ADD data/largescale_testing.json /qa/data/largescale_testing.json
 ADD data/largescale_training.json /qa/data/largescale_training.json
 ADD data/multilingual_testing.json /qa/data/multilingual_testing.json
+ADD data/ls_testing_num.json /qa/data/ls_testing_num.json
 
 WORKDIR /qa 
 

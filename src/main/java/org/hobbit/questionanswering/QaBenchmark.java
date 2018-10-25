@@ -50,6 +50,10 @@ public class QaBenchmark extends AbstractBenchmarkController {
 	protected static final Resource FRENCH = qaResource("FrLanguage");
 	protected static final Resource DUTCH = qaResource("NlLanguage");
 	protected static final Resource ROMANIAN = qaResource("RoLanguage");
+	protected static final Resource ONE_TRIPLE = qaResource("one");
+	protected static final Resource TWO_TRIPLES = qaResource("two");
+	protected static final Resource THREE_TRIPLES = qaResource("three");
+	protected static final Resource NO_TRIPLES = qaResource("NoTriple");
 	
 	private final String _LARGESCALE="largescale";
 	private final String _MULTILINGUAL="multilingual";
@@ -62,6 +66,7 @@ public class QaBenchmark extends AbstractBenchmarkController {
 	private String experimentDataset;
 	private String questionLanguage;
 	private String sparqlService;
+	private int numberOfTriples;
 	
 	private int numberOfQuestionSets;
 	//private int numberOfQuestions;
@@ -165,7 +170,7 @@ public class QaBenchmark extends AbstractBenchmarkController {
 
         //load questionLanguage from benchmark model
         questionLanguage = "";
-        if (!experimentTaskName.equalsIgnoreCase("multilingual")) {
+        if (!experimentTaskName.equalsIgnoreCase(_MULTILINGUAL)) {
         	questionLanguage = "en";
         	LOGGER.info("QaBenchmark: The language is sat to \"en\" due to experiment type is not \"multilingual\".");
         }else{
@@ -203,6 +208,35 @@ public class QaBenchmark extends AbstractBenchmarkController {
                 }
             }
         }
+        // Load triples
+        numberOfTriples = -1;
+        if (!experimentTaskName.equalsIgnoreCase(_LARGESCALE)) {
+	        iterator = benchmarkParamModel.listObjectsOfProperty(benchmarkParamModel.getProperty(gerbilQaUri+"hasTriples"));
+	    	if (iterator.hasNext()) {
+	            try {
+	            	Resource resource = iterator.next().asResource();
+	            	if (resource == null) { 
+	            		throw this.localError("QaBenchmark: Got null Triples.");
+	            	}else {
+	                	String uri = resource.getURI();
+	                	if (ONE_TRIPLE.getURI().equals(uri)) {
+	                        numberOfTriples =1;
+	                    }else if (TWO_TRIPLES.getURI().equals(uri)) {
+	                    	numberOfTriples =2;
+	                    }else if (THREE_TRIPLES.getURI().equals(uri)) {
+	                    	numberOfTriples =3;
+	                    }else if (NO_TRIPLES.getURI().equals(uri)) {
+	                    	numberOfTriples =-1;
+	                    }else{
+	                    	this.localError("QaBenchmark: There are only three possible options.");
+	                    }
+	                    LOGGER.info("QaBenchmark: Got nubmer of triples from the parameter model: \""+questionLanguage+"\"");
+	            	}
+	            } catch (Exception e) {
+	                LOGGER.error("QaBenchmark: Exception while parsing parameter.\n", e);
+	            }
+	        }
+        }
         
         //load numberOfQuestionSets from benchmark model
         numberOfQuestionSets = -1;
@@ -220,7 +254,7 @@ public class QaBenchmark extends AbstractBenchmarkController {
         if (numberOfQuestionSets <= 0) {
         	LOGGER.error("QaBenchmark: Couldn't get the number of question sets from the parameter model. Using default value.");
         	//If it is large scale and testing set it to 30 by default.
-        	if(experimentTaskName.equals("largescale") && experimentDataset.equalsIgnoreCase("testing")){
+        	if(experimentTaskName.equals(_LARGESCALE) && experimentDataset.equalsIgnoreCase("testing")){
         		numberOfQuestionSets = 30;
         	}else{
         		numberOfQuestionSets = 50;
@@ -297,7 +331,9 @@ public class QaBenchmark extends AbstractBenchmarkController {
         		QaDataGenerator.NUMBER_OF_QUESTIONS_PARAMETER_KEY + "=" + numberOfQuestionSets,
                 QaDataGenerator.SEED_PARAMETER_KEY + "=" + seed,
                 QaDataGenerator.SPARQL_SERVICE_PARAMETER_KEY + "=" + sparqlService,
-                QaDataGenerator.DATASET_PARAMETER_KEY + "=" + experimentDataset};
+                QaDataGenerator.DATASET_PARAMETER_KEY + "=" + experimentDataset,
+                QaDataGenerator.NUMBER_OF_TRIPLES_PARAMETER_KEY +"=" + numberOfTriples
+                };
         //Create data generator
         createDataGenerators(DATA_GENERATOR_CONTAINER_IMAGE, NUMBER_OF_GENERATORS, envVariables);
 
@@ -311,7 +347,8 @@ public class QaBenchmark extends AbstractBenchmarkController {
         		QaTaskGenerator.NUMBER_OF_QUESTIONS_PARAMETER_KEY + "=" + numberOfQuestionSets,
         		QaTaskGenerator.TIME_FOR_ANSWERING_PARAMETER_KEY + "=" + timeForAnswering,
 				QaTaskGenerator.SEED_PARAMETER_KEY + "=" + seed,
-				QaTaskGenerator.DATASET_PARAMETER_KEY + "=" + experimentDataset};
+				QaTaskGenerator.DATASET_PARAMETER_KEY + "=" + experimentDataset
+				};
       //create task generator
         createTaskGenerators(TASK_GENERATOR_CONTAINER_IMAGE, NUMBER_OF_GENERATORS, envVariables);
 
@@ -344,7 +381,7 @@ public class QaBenchmark extends AbstractBenchmarkController {
         waitForTaskGenToFinish();
         
         LOGGER.info("QaBenchmark: Waiting for System to finish.");
-        if(experimentTaskName.equalsIgnoreCase("largescale")){
+        if(experimentTaskName.equalsIgnoreCase(_LARGESCALE)){
         	waitForSystemToFinish(60000); //wait up to 1 more minute
         }else{
         	waitForSystemToFinish(600000); //wait up to 10 more minutes

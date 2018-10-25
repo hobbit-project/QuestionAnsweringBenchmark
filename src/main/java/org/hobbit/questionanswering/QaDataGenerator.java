@@ -2,6 +2,7 @@ package org.hobbit.questionanswering;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.hobbit.core.components.AbstractDataGenerator;
@@ -9,6 +10,7 @@ import org.hobbit.core.rabbit.RabbitMQUtils;
 import org.hobbit.questionanswering.helper.QaHelper;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.jena.atlas.json.JsonValue;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 
@@ -27,6 +29,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
     public static final String SEED_PARAMETER_KEY = "qa.seed";
     public static final String SPARQL_SERVICE_PARAMETER_KEY = "qa.sparql_service";
     public static final String DATASET_PARAMETER_KEY = "qa.dataset";
+    public static final String NUMBER_OF_TRIPLES_PARAMETER_KEY = "qa.number_of_triples";
     
     public static final String RESULT_MISSING = "result.missing";
     public static final String META_EN_MISSING = "metainfo-en.missing";
@@ -45,8 +48,9 @@ public class QaDataGenerator extends AbstractDataGenerator {
     private long seed;
     private String sparqlService;
     private String experimentDataset;
+	private int numberOfTriples;
     
-    private ArrayList<String> qaData;
+    private List<JsonValue> qaData;
     private QaHelper qaHelper;
     private int numberOfQuestions;
     Map<String, String> env;
@@ -138,6 +142,18 @@ public class QaDataGenerator extends AbstractDataGenerator {
         	throw this.localErrorIllegal("QaDataGen: Couldn't get \"" + NUMBER_OF_QUESTIONS_PARAMETER_KEY + "\" from the environment. Aborting.");
         }
         
+     // Load number of Triples
+        if(env.containsKey(NUMBER_OF_TRIPLES_PARAMETER_KEY)){
+        	try {
+                numberOfTriples = Integer.parseInt(env.get(NUMBER_OF_TRIPLES_PARAMETER_KEY));
+                LOGGER.info("QaTaskGen: Got number of questions from the environment parameters: \""+numberOfTriples+"\"");
+            } catch (NumberFormatException e) {
+            	throw this.localError("QaTaskGen: Exception while trying to parse the number of questions. Aborting.", e);
+            }
+        }else{
+        	throw this.localErrorIllegal("QaTaskGen: Couldn't get \"" + NUMBER_OF_TRIPLES_PARAMETER_KEY + "\" from the environment. Aborting.");
+        }
+        
         //Set numberOfQuetions
         if(experimentTaskName.equalsIgnoreCase(LARGESCALE) && experimentDataset.equalsIgnoreCase(TESTING))
         	this.numberOfQuestions = (this.numberOfQuestionSets*(this.numberOfQuestionSets+1))/2;
@@ -175,15 +191,18 @@ public class QaDataGenerator extends AbstractDataGenerator {
          * It load data from .json files by using qaHelper class
          */
         LOGGER.info("QaDataGen: Loading data (+metainfo) for "+experimentTaskName+"-"+experimentDataset+".");
-        qaHelper=new QaHelper(this.seed,this.numberOfQuestions,this.sparqlService);
+        qaHelper=new QaHelper(this.seed,this.numberOfQuestions);
         try{
         	if(experimentDataset.equalsIgnoreCase(TRAINING)) {
         		switch(experimentTaskName) {
         		case LARGESCALE:
-        			qaData=qaHelper.getLargeScaleData("largescale_training.json");
+        			if(numberOfTriples==-1)
+        				qaData=qaHelper.getLargeScaleData("data/largescale_training.json");
+        			else
+        				qaData = qaHelper.getLargeScaleData("data/ls_testing_num.json", numberOfTriples);
         			break;
         		case MULTILINGUAL:
-        			qaData=qaHelper.getMultilingualData("multilingual_testing.json",questionLanguage);
+        			qaData=qaHelper.getMultilingualData("data/multilingual_testing.json",questionLanguage);
         			break;
         		default:
         			throw this.localError("QaDataGen: Not supported Task!");
@@ -191,10 +210,13 @@ public class QaDataGenerator extends AbstractDataGenerator {
         	}else if(experimentDataset.equalsIgnoreCase(TESTING)) {
         		switch(experimentTaskName) {
         		case LARGESCALE:
-        			qaData=qaHelper.getLargeScaleData("largescale_testing.json");
+        			if(numberOfTriples==-1)
+        				qaData=qaHelper.getLargeScaleData("data/largescale_testing.json");
+        			else
+        				qaData = qaHelper.getLargeScaleData("data/ls_testing_num.json", numberOfTriples);
         			break;
         		case MULTILINGUAL:
-        			qaData=qaHelper.getMultilingualData("multilingual_testing.json",questionLanguage);
+        			qaData=qaHelper.getMultilingualData("data/multilingual_testing.json",questionLanguage);
         			break;
         		default:
         			throw this.localError("QaDataGen: Not supported Task!");
@@ -226,7 +248,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
     public void generateData() throws Exception{
     	LOGGER.info("QaDataGen: Generating data and sending it to the Task Generator.");
     	for(int i=0;i<qaData.size();i++) {
-    		sendDataToTaskGenerator(RabbitMQUtils.writeString(qaData.get(i)));
+    		sendDataToTaskGenerator(RabbitMQUtils.writeString(qaData.get(i).toString()));
     		//LOGGER.info(qaData.get(i));
     	}
     	LOGGER.info("QaDataGen: Data Generated and sent to task generator.");
