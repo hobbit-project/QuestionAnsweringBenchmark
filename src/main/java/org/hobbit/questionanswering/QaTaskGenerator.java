@@ -210,12 +210,12 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
     	//String taskId = getNextTaskId();
     	qaldQuestion = new QaldBuilder(RabbitMQUtils.readString(data));
     	qaldQuestion.setDatasetID(this.datasetId);
-    	answerDataList.add(RabbitMQUtils.writeString(qaldQuestion.getQaldQuestion().toString()));
+    	answerDataList.add(RabbitMQUtils.writeString(qaldQuestion.getQuestionAsQald().toString()));
     	//LOGGER.info("With answers:\n"+qaldQuestion.getQaldQuestion());
     	qaldQuestion.removeAnswers();
     	qaldQuestion.removeQuery();
     	//LOGGER.info("Without answers:\n"+qaldQuestion.getQaldQuestion());
-		taskDataList.add(RabbitMQUtils.writeString(qaldQuestion.getQaldQuestion().toString()));
+		taskDataList.add(RabbitMQUtils.writeString(qaldQuestion.getQuestionAsQald().toString()));
         // send data if numberOfQuestions reached
         taskCounter++;
         if(taskCounter == numberOfQuestions){
@@ -227,7 +227,7 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
             		for(int x=1;x<=this.numberOfQuestionSets;x++) {
                 		for(int j=0;j<x;j++) {
                 			sendData(i);
-                			LOGGER.info("QaTaskGen:Task "+i+" has been sent!");
+                			//LOGGER.info("QaTaskGen:Task "+i+" has been sent!");
                 			i++;
                 		}
             	    	TimeUnit.MILLISECONDS.sleep(timeForAnswering);
@@ -235,7 +235,7 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
                 }else {
             		for(int i = 0; i<numberOfQuestions; i++){
 	                	sendData(i);
-	                	LOGGER.info("QaTaskGen: "+i+" has been sent!");
+	                	//LOGGER.info("QaTaskGen: "+i+" has been sent!");
 	                	TimeUnit.MILLISECONDS.sleep(timeForAnswering);
                 	}
                 }

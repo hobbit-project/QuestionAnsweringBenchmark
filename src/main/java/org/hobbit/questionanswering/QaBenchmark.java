@@ -50,9 +50,9 @@ public class QaBenchmark extends AbstractBenchmarkController {
 	protected static final Resource FRENCH = qaResource("FrLanguage");
 	protected static final Resource DUTCH = qaResource("NlLanguage");
 	protected static final Resource ROMANIAN = qaResource("RoLanguage");
-	protected static final Resource ONE_TRIPLE = qaResource("one");
-	protected static final Resource TWO_TRIPLES = qaResource("two");
-	protected static final Resource THREE_TRIPLES = qaResource("three");
+	protected static final Resource ONE_TRIPLE = qaResource("oneTriple");
+	protected static final Resource TWO_TRIPLES = qaResource("twoTriple");
+	protected static final Resource THREE_TRIPLES = qaResource("threeTriple");
 	protected static final Resource NO_TRIPLES = qaResource("NoTriple");
 	
 	private final String _LARGESCALE="largescale";
@@ -210,7 +210,7 @@ public class QaBenchmark extends AbstractBenchmarkController {
         }
         // Load triples
         numberOfTriples = -1;
-        if (!experimentTaskName.equalsIgnoreCase(_LARGESCALE)) {
+        if (experimentTaskName.equalsIgnoreCase(_LARGESCALE)) {
 	        iterator = benchmarkParamModel.listObjectsOfProperty(benchmarkParamModel.getProperty(gerbilQaUri+"hasTriples"));
 	    	if (iterator.hasNext()) {
 	            try {
@@ -230,7 +230,7 @@ public class QaBenchmark extends AbstractBenchmarkController {
 	                    }else{
 	                    	this.localError("QaBenchmark: There are only three possible options.");
 	                    }
-	                    LOGGER.info("QaBenchmark: Got nubmer of triples from the parameter model: \""+questionLanguage+"\"");
+	                    LOGGER.info("QaBenchmark: Got nubmer of triples from the parameter model: \""+numberOfTriples+"\"");
 	            	}
 	            } catch (Exception e) {
 	                LOGGER.error("QaBenchmark: Exception while parsing parameter.\n", e);

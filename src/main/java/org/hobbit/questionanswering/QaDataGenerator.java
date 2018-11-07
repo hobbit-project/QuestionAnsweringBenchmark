@@ -1,7 +1,6 @@
 package org.hobbit.questionanswering;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -15,7 +14,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 
 /**
- * A class is inherits {@code AbstractDataGenerator} class to generate questions and answers and send them to {@code QaTaskGenerator}.
+ * A class is inherits {@code AbstractDataGenerator} class to generate questions and answers and send them to {@code QaDataGenerator}.
  * 
  */
 public class QaDataGenerator extends AbstractDataGenerator {
@@ -146,12 +145,12 @@ public class QaDataGenerator extends AbstractDataGenerator {
         if(env.containsKey(NUMBER_OF_TRIPLES_PARAMETER_KEY)){
         	try {
                 numberOfTriples = Integer.parseInt(env.get(NUMBER_OF_TRIPLES_PARAMETER_KEY));
-                LOGGER.info("QaTaskGen: Got number of questions from the environment parameters: \""+numberOfTriples+"\"");
+                LOGGER.info("QaDataGen: Got number of Triples from the environment parameters: \""+numberOfTriples+"\"");
             } catch (NumberFormatException e) {
-            	throw this.localError("QaTaskGen: Exception while trying to parse the number of questions. Aborting.", e);
+            	throw this.localError("QaDataGen: Exception while trying to parse the number of Triples. Aborting.", e);
             }
         }else{
-        	throw this.localErrorIllegal("QaTaskGen: Couldn't get \"" + NUMBER_OF_TRIPLES_PARAMETER_KEY + "\" from the environment. Aborting.");
+        	throw this.localErrorIllegal("QaDataGen: Couldn't get \"" + NUMBER_OF_TRIPLES_PARAMETER_KEY + "\" from the environment. Aborting.");
         }
         
         //Set numberOfQuetions
@@ -191,7 +190,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
          * It load data from .json files by using qaHelper class
          */
         LOGGER.info("QaDataGen: Loading data (+metainfo) for "+experimentTaskName+"-"+experimentDataset+".");
-        qaHelper=new QaHelper(this.seed,this.numberOfQuestions);
+        qaHelper=new QaHelper(this.seed,this.numberOfQuestions,this.sparqlService);
         try{
         	if(experimentDataset.equalsIgnoreCase(TRAINING)) {
         		switch(experimentTaskName) {
@@ -219,7 +218,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
         			qaData=qaHelper.getMultilingualData("data/multilingual_testing.json",questionLanguage);
         			break;
         		default:
-        			throw this.localError("QaDataGen: Not supported Task!");
+        			throw this.localError("QaDataGen: Not supported Task yet!");
         		}
         	}else {
         		throw this.localError("QaDataGen: Data set must be only training or testing!");
@@ -237,7 +236,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
     		LOGGER.error("QaDataGen: Chosen number of questions is too high.");
     		LOGGER.info("QaDataGen: Reducing number of questions to "+numberOfQuestions+".");
         }
-        LOGGER.info("QaDataGen: "+this.numberOfQuestions+" question generated.");
+        LOGGER.info("QaDataGen: "+this.numberOfQuestions+" questions generated.");
         LOGGER.info("QaDataGen: Initialized.");
     }
 
