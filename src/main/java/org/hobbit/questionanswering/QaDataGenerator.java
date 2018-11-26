@@ -241,6 +241,7 @@ public class QaDataGenerator extends AbstractDataGenerator {
     		//LOGGER.info(qaData.get(i));
     	}
     	LOGGER.info("QaDataGen: Data Generated and sent to task generator.");
+    	//sendDataToSystemAdapter(RabbitMQUtils.writeString("Test"));
 	}
 
     /**
