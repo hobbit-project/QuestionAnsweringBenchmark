@@ -14,31 +14,23 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 
 public class QaTaskGenerator extends AbstractTaskGenerator{
-	//private static final Logger LOGGER = LoggerFactory.getLogger(QaTaskGenerator.class);
 	private static final Logger LOGGER = LogManager.getLogger(QaTaskGenerator.class);
 	
 	public static final String EXPERIMENT_TYPE_PARAMETER_KEY = "qa.experiment_type";
 	public static final String EXPERIMENT_TASK_PARAMETER_KEY = "qa.experiment_task";
-	public static final String QUESTION_LANGUAGE_PARAMETER_KEY = "qa.question_language";
 	public static final String NUMBER_OF_QUESTIONS_PARAMETER_KEY = "qa.number_of_questions";
 	public static final String TIME_FOR_ANSWERING_PARAMETER_KEY = "qa.time_for_answering";
 	public static final String SEED_PARAMETER_KEY = "qa.seed";
 	public static final String DATASET_PARAMETER_KEY = "qa.dataset";
 	
-	public static final String RESULT_MISSING = "result.missing";
-	public static final String RESULTTYPE_MISSING = "resulttype.missing";
-    public static final String META_EN_MISSING = "metainfo-en.missing";
-    public static final String META_MISSING = "metainfo.missing";
-    public static final String RESULT_EMPTY = "EMPTY.RESULT";
-    
     public static final String LARGESCALE = "largescale";
     public static final String MULTILINGUAL = "multilingual";
+    
     public static final String TESTING = "testing";
     public static final String TRAINING = "training";
     
 	private String experimentTypeName;
 	private String experimentTaskName;
-	private String questionLanguage;
 	private int numberOfQuestionSets;
 	private long timeForAnswering;
 	private long seed;
@@ -70,9 +62,8 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
          * Ex: QA
          */
         if(env.containsKey(EXPERIMENT_TYPE_PARAMETER_KEY)) {
-        	String value = env.get(EXPERIMENT_TYPE_PARAMETER_KEY);
-            try {
-            	experimentTypeName = value;
+        	try {
+            	experimentTypeName = String.valueOf(env.get(EXPERIMENT_TYPE_PARAMETER_KEY));
             	LOGGER.info("QaTaskGen: Got experiment type from the environment parameters: \""+experimentTypeName+"\"");
             } catch (Exception e) {
                 throw this.localError("QaTaskGen: Exception while trying to parse the experiment type. Aborting.", e);
@@ -86,9 +77,8 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
          * Ex: LARGESCALE, MULTILINGUAL, WIKIDATA, WIKIDATA, or HYBRID
          */
         if(env.containsKey(EXPERIMENT_TASK_PARAMETER_KEY)) {
-            String value = env.get(EXPERIMENT_TASK_PARAMETER_KEY);
             try {
-            	experimentTaskName = value;
+            	experimentTaskName =String.valueOf(env.get(EXPERIMENT_TASK_PARAMETER_KEY));
             	LOGGER.info("QaTaskGen: Got experiment task from the environment parameters: \""+experimentTaskName+"\"");
             } catch (Exception e) {
                 throw this.localError("QaTaskGen: Exception while trying to parse the experiment task. Aborting.", e);
@@ -102,31 +92,14 @@ public class QaTaskGenerator extends AbstractTaskGenerator{
          * Ex: testing or training
          */
         if(env.containsKey(DATASET_PARAMETER_KEY)) {
-            String value = env.get(DATASET_PARAMETER_KEY);
             try {
-            	experimentDataset = value;
+            	experimentDataset = String.valueOf(env.get(DATASET_PARAMETER_KEY));
             	LOGGER.info("QaTaskGen: Got dataset value from the environment parameters: \""+experimentDataset+"\"");
             } catch (Exception e) {
                 throw this.localError("QaTaskGen: Exception while trying to parse the dataset value. Aborting.", e);
             }
         } else {
             throw this.localError("QaTaskGen: Couldn't get \"" + DATASET_PARAMETER_KEY + "\" from the properties. Aborting.");
-        }
-        
-        /*
-         * load questionLanguage from environment
-         * Ex: en, fr, or de
-         */
-        if(env.containsKey(QUESTION_LANGUAGE_PARAMETER_KEY)) {
-            String value = env.get(QUESTION_LANGUAGE_PARAMETER_KEY);
-            try {
-            	questionLanguage = value;
-            	LOGGER.info("QaTaskGen: Got language from the environment parameters: \""+questionLanguage+"\"");
-            } catch (Exception e) {
-            	throw this.localError("QaTaskGen: Exception while trying to parse the experiment language. Aborting.", e);
-            }
-        } else {
-            throw this.localError("QaTaskGen: Couldn't get \"" + QUESTION_LANGUAGE_PARAMETER_KEY + "\" from the properties. Aborting.");
         }
         
         //load number of questions from environment

@@ -18,7 +18,6 @@ import org.apache.logging.log4j.LogManager;
  * 
  */
 public class QaDataGenerator extends AbstractDataGenerator {
-	//private static final Logger LOGGER = LoggerFactory.getLogger(QaDataGenerator.class);
 	private static final Logger LOGGER = LogManager.getLogger(QaDataGenerator.class);
 	
 	public static final String EXPERIMENT_TYPE_PARAMETER_KEY = "qa.experiment_type";
@@ -30,13 +29,9 @@ public class QaDataGenerator extends AbstractDataGenerator {
     public static final String DATASET_PARAMETER_KEY = "qa.dataset";
     public static final String NUMBER_OF_TRIPLES_PARAMETER_KEY = "qa.number_of_triples";
     
-    public static final String RESULT_MISSING = "result.missing";
-    public static final String META_EN_MISSING = "metainfo-en.missing";
-    public static final String META_MISSING = "metainfo.missing";
-    public static final String RESULT_EMPTY = "EMPTY.RESULT";
-
     public static final String LARGESCALE = "largescale";
     public static final String MULTILINGUAL = "multilingual";
+    
     public static final String TESTING = "testing";
     public static final String TRAINING = "training";
     
@@ -71,9 +66,8 @@ public class QaDataGenerator extends AbstractDataGenerator {
          * Ex: QA
          */
         if(env.containsKey(EXPERIMENT_TYPE_PARAMETER_KEY)) {
-        	String value = env.get(EXPERIMENT_TYPE_PARAMETER_KEY);
             try {
-            	experimentTypeName = value;
+            	experimentTypeName =String.valueOf(env.get(EXPERIMENT_TYPE_PARAMETER_KEY));
             	LOGGER.info("QaDataGen: Got experiment type from the environment parameters: \""+experimentTypeName+"\"");
             } catch (Exception e) {
                 throw this.localError("QaDataGen: Exception while trying to parse the experiment type. Aborting.", e);
@@ -87,9 +81,8 @@ public class QaDataGenerator extends AbstractDataGenerator {
          * Ex: LARGESCALE, MULTILINGUAL, WIKIDATA, WIKIDATA, or HYBRID
          */
         if(env.containsKey(EXPERIMENT_TASK_PARAMETER_KEY)) {
-            String value = env.get(EXPERIMENT_TASK_PARAMETER_KEY);
             try {
-            	experimentTaskName = value;
+            	experimentTaskName = String.valueOf(env.get(EXPERIMENT_TASK_PARAMETER_KEY));
             	LOGGER.info("QaDataGen: Got experiment task from the environment parameters: \""+experimentTaskName+"\"");
             } catch (Exception e) {
                 throw this.localError("QaDataGen: Exception while trying to parse the experiment task. Aborting.", e);
@@ -103,9 +96,8 @@ public class QaDataGenerator extends AbstractDataGenerator {
          * Ex: testing or training
          */
         if(env.containsKey(DATASET_PARAMETER_KEY)) {
-            String value = env.get(DATASET_PARAMETER_KEY);
             try {
-            	experimentDataset = value;
+            	experimentDataset = String.valueOf(env.get(DATASET_PARAMETER_KEY));
             	LOGGER.info("QaDataGen: Got dataset value from the environment parameters: \""+experimentDataset+"\"");
             } catch (Exception e) {
                 throw this.localError("QaDataGen: Exception while trying to parse the dataset value. Aborting.", e);
@@ -118,9 +110,8 @@ public class QaDataGenerator extends AbstractDataGenerator {
          * Ex: en, fr, or de
          */
         if(env.containsKey(QUESTION_LANGUAGE_PARAMETER_KEY)) {
-            String value = env.get(QUESTION_LANGUAGE_PARAMETER_KEY);
             try {
-            	questionLanguage = value;
+            	questionLanguage = String.valueOf(env.get(QUESTION_LANGUAGE_PARAMETER_KEY));
             	LOGGER.info("QaDataGen: Got language from the environment parameters: \""+questionLanguage+"\"");
             } catch (Exception e) {
                 throw this.localError("QaDataGen: Exception while trying to parse the experiment language. Aborting.", e);
@@ -174,9 +165,8 @@ public class QaDataGenerator extends AbstractDataGenerator {
         //load sparqlService from environment
         sparqlService = "";
         if(env.containsKey(SPARQL_SERVICE_PARAMETER_KEY)) {
-            String value = env.get(SPARQL_SERVICE_PARAMETER_KEY);
             try {
-            	sparqlService = value;
+            	sparqlService = String.valueOf(env.get(SPARQL_SERVICE_PARAMETER_KEY));
             	LOGGER.info("QaDataGen: Got SPARQL service from the environment parameters: \""+sparqlService+"\"");
             } catch (Exception e) {
                 throw this.localError("QaDataGen: Exception while trying to parse the SPARQL service. Aborting.", e);

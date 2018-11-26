@@ -36,20 +36,20 @@ public class QaBenchmark extends AbstractBenchmarkController {
 	protected static final String gerbilUri = "http://w3id.org/gerbil/vocab#";
 	protected static final String gerbilQaUri = "http://w3id.org/gerbil/qa/hobbit/vocab#";
 	protected static final Resource QA = resource("QA");
-	protected static final Resource HYBRID = qaResource("hybridTask");
+	//protected static final Resource HYBRID = qaResource("hybridTask");
 	protected static final Resource LARGESCALE = qaResource("largescaleTask");
 	protected static final Resource MULTILINGUAL = qaResource("multilingualTask");
-	protected static final Resource WIKIDATA = qaResource("wikidataTask");
+	//protected static final Resource WIKIDATA = qaResource("wikidataTask");
 	protected static final Resource TESTING = qaResource("testing");
 	protected static final Resource TRAINING = qaResource("training");
 	protected static final Resource ENGLISH = qaResource("EnLanguage");
-	protected static final Resource FARSI = qaResource("FaLanguage");
+	//protected static final Resource FARSI = qaResource("FaLanguage");
 	protected static final Resource GERMAN = qaResource("DeLanguage");
-	protected static final Resource SPANISH = qaResource("EsLanguage");
+	//protected static final Resource SPANISH = qaResource("EsLanguage");
 	protected static final Resource ITALIAN = qaResource("ItLanguage");
-	protected static final Resource FRENCH = qaResource("FrLanguage");
-	protected static final Resource DUTCH = qaResource("NlLanguage");
-	protected static final Resource ROMANIAN = qaResource("RoLanguage");
+	//protected static final Resource FRENCH = qaResource("FrLanguage");
+	//protected static final Resource DUTCH = qaResource("NlLanguage");
+	//protected static final Resource ROMANIAN = qaResource("RoLanguage");
 	protected static final Resource ONE_TRIPLE = qaResource("oneTriple");
 	protected static final Resource TWO_TRIPLES = qaResource("twoTriple");
 	protected static final Resource THREE_TRIPLES = qaResource("threeTriple");
@@ -107,7 +107,7 @@ public class QaBenchmark extends AbstractBenchmarkController {
     	Configurator.setRootLevel(Level.ALL); // setup logger
     	
     	LOGGER.info("QaBenchmark: Initializing.");
-    	super.init(); // call intialisation function in super class
+    	super.init(); // call initialization function in super class
     	experimentType = ExperimentType.QA; // set experiment type to Question Answering
     	LOGGER.info("QaBenchmark: Loading parameters from benchmark model.");
         
@@ -184,21 +184,24 @@ public class QaBenchmark extends AbstractBenchmarkController {
 	                	String uri = resource.getURI();
 	                	if (ENGLISH.getURI().equals(uri)) {
 	                        questionLanguage = "en";
-	                    }else if (FARSI.getURI().equals(uri)) {
-	                        questionLanguage = "fa";
 	                    }else if (GERMAN.getURI().equals(uri)) {
 	                        questionLanguage = "de";
-	                    }else if (SPANISH.getURI().equals(uri)) {
-	                        questionLanguage = "es";
 	                    }else if (ITALIAN.getURI().equals(uri)) {
 	                        questionLanguage = "it";
+	                    }
+	                	/*
+	                    else if (FARSI.getURI().equals(uri)) {
+	                        questionLanguage = "fa";
+	                    }else if (SPANISH.getURI().equals(uri)) {
+	                        questionLanguage = "es";
 	                    }else if (FRENCH.getURI().equals(uri)) {
 	                        questionLanguage = "fr";
 	                    }else if (DUTCH.getURI().equals(uri)) {
 	                        questionLanguage = "nl";
 	                    }else if (ROMANIAN.getURI().equals(uri)) {
 	                        questionLanguage = "ro";
-	                    }else{
+	                    }*/
+	                    else{
 	                    	this.localError("QaBenchmark: Chosen question language is not supported yet");
 	                    }
 	                    LOGGER.info("QaBenchmark: Got question language from the parameter model: \""+questionLanguage+"\"");
@@ -343,7 +346,6 @@ public class QaBenchmark extends AbstractBenchmarkController {
         envVariables = new String[] {
         		QaTaskGenerator.EXPERIMENT_TYPE_PARAMETER_KEY + "=" + experimentType.getName(),
         		QaTaskGenerator.EXPERIMENT_TASK_PARAMETER_KEY + "=" + experimentTaskName,
-        		QaTaskGenerator.QUESTION_LANGUAGE_PARAMETER_KEY + "=" + questionLanguage,
         		QaTaskGenerator.NUMBER_OF_QUESTIONS_PARAMETER_KEY + "=" + numberOfQuestionSets,
         		QaTaskGenerator.TIME_FOR_ANSWERING_PARAMETER_KEY + "=" + timeForAnswering,
 				QaTaskGenerator.SEED_PARAMETER_KEY + "=" + seed,
@@ -371,8 +373,8 @@ public class QaBenchmark extends AbstractBenchmarkController {
 		LOGGER.info("QaBenchmark: Executing benchmark.");
 
 		//Send signals to Data generator and Task generator
+		sendToCmdQueue(Commands.DATA_GENERATOR_START_SIGNAL);
         sendToCmdQueue(Commands.TASK_GENERATOR_START_SIGNAL);
-        sendToCmdQueue(Commands.DATA_GENERATOR_START_SIGNAL);
 
         LOGGER.info("QaBenchmark: Waiting for Generators to finish.");
         
@@ -409,9 +411,9 @@ public class QaBenchmark extends AbstractBenchmarkController {
 	 */
 	@Override
     public void close() throws IOException {
-		LOGGER.info("QaBenchmark: Closing.");
 		LOGGER.info("QaBenchmark: Duration -> "+(System.currentTimeMillis() - startTime));
-        super.close();
+		LOGGER.info("QaBenchmark: Closing.");
+		super.close();
         LOGGER.info("QaBenchmark: Closed.");
     }
 	
