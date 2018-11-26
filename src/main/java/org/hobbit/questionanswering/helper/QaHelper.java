@@ -52,14 +52,24 @@ public class QaHelper {
 	 */
 	public List<JsonValue> getLargeScaleData(String fileName) throws Exception {
 		JsonArray questionsArray=JSON.readAny(fileName).getAsArray();
-		for(JsonValue quest:questionsArray) {
-			qald = new QaldBuilder();
-			qald.setQuestionAsJson(quest.toString());
-			if(this.isGetAnswers()) {
+		if(this.isGetAnswers()){
+			for(JsonValue quest:questionsArray) {
+				qald = new QaldBuilder();
+				qald.setQuestionAsJson(quest.toString());
+				try {
 				qald.setAnswers(this.sparqlService);
 				if(this.qald.getAnswers().size()>0)
 					this.data.add(qald.getQuestionAsQald());
-			}else {
+				}catch(Exception e) {
+					LOGGER.error("QaHelper: ID="+this.qald.getID());
+					LOGGER.error("QaHelper: Query=\n"+this.qald.getQuery());
+					LOGGER.error("QaHelper: "+e.getMessage());
+				}
+			}
+		}else {
+			for(JsonValue quest:questionsArray) {
+				qald = new QaldBuilder();
+				qald.setQuestionAsJson(quest.toString());
 				qald.removeAnswers();
 				this.data.add(qald.getQuestionAsQald());
 			}
@@ -81,17 +91,24 @@ public class QaHelper {
 	public List<JsonValue> getLargeScaleData(String fileName, int triple) throws Exception {
 		
 		JsonArray questionsArray=JSON.readAny(fileName).getAsArray();
-		
-		for(JsonValue quest:questionsArray) {
-			qald = new QaldBuilder();
-			qald.setQuestionAsJson(quest.toString());
-			if(qald.getTriple()==triple) {
-				qald.removeTriple();
-				if(this.isGetAnswers()) {
+		if(this.isGetAnswers()) {
+			for(JsonValue quest:questionsArray) {
+				qald = new QaldBuilder();
+				qald.setQuestionAsJson(quest.toString());
+				if(qald.getTriple()==triple) {
+					qald.removeTriple();
 					this.qald.setAnswers(this.sparqlService);
 					if(this.qald.getAnswers().size()>0)
 						this.data.add(qald.getQuestionAsQald());
-				}else {
+				}
+			}
+		}
+		else {
+			for(JsonValue quest:questionsArray) {
+				qald = new QaldBuilder();
+				qald.setQuestionAsJson(quest.toString());
+				if(qald.getTriple()==triple) {
+					qald.removeTriple();
 					this.qald.removeAnswers();
 					this.data.add(qald.getQuestionAsQald());
 				}
