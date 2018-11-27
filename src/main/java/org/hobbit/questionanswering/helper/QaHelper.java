@@ -148,7 +148,7 @@ public class QaHelper {
 		}
 		
 		if(this.numOfQuestions>data.size())
-			throw new Exception("Number of Quesrtions is bigger than the data set size!");
+			throw new Exception("Number of Quesrtions ("+this.numOfQuestions+") is bigger than the data set size ("+data.size()+")!");
 		Collections.shuffle(data, new Random(seed));
 		
 		return this.data.subList(0, numOfQuestions);
